@@ -1,15 +1,121 @@
-/**
- * @file main.c
- *
- * Copyright (c) 2019 Yuya Ogata
- */
+// qmidiin.cpp
+#include <iostream>
+#include <cstdlib>
+#include <signal.h>
+#include <unistd.h>
+#include <math.h>
 
 #include <soundio/soundio.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
+#include "RtMidi.h"
+
+float pitch = 440.0f;
+float volume = 1.0;
+
+/**
+ * @brief chooseMidiPort
+ * @param[in,out] rtmidi
+ */
+static bool chooseMidiPort( RtMidiIn *rtmidi )
+{
+    std::string portName;
+    unsigned int ix = 0, nPorts = rtmidi->getPortCount();
+    if ( nPorts == 0 ) {
+        std::cout << "No input ports available!" << std::endl;
+        return false;
+    }
+
+    if ( nPorts == 1 ) {
+        std::cout << "\nOpening " << rtmidi->getPortName() << std::endl;
+    }
+    else {
+        for ( ix=0; ix<nPorts; ix++ ) {
+            portName = rtmidi->getPortName(ix);
+            std::cout << "  Input port #" << ix << ": " << portName << '\n';
+        }
+
+        do {
+            std::cout << "\nChoose a port number: ";
+            std::cin >> ix;
+        } while ( ix >= nPorts );
+        std::string keyHit;
+        std::getline( std::cin, keyHit );  // used to clear out stdin
+    }
+
+    rtmidi->openPort( ix );
+
+  return true;
+}
+
+/**
+ * @brief midiInCallback
+ * @param[in]  deltatime
+ * @param[in]  message
+ * @param[in]  userData
+ */
+static void midiInCallback( double deltatime, std::vector< unsigned char > *message, void * userData )
+{
+    const unsigned int nBytes = message->size();
+    if(nBytes <= 0) { return; }
+
+    int const nKind = message->at(0) & 0xF0;
+
+    switch( nKind ) {
+        case 0x80:  // ノートオフ
+            volume = 0.0f;
+            break;
+        case 0x90:  // ノートオン
+            float notenum = message->at(1);
+            pitch = 440.0 * pow(2.0, (notenum - 69.0) / 12.0);
+
+            float velocity = message->at(2);
+            volume = velocity / 127.0f;
+            break;
+    }
+
+#if 1
+    for ( unsigned int ix=0; ix<nBytes; ix++ ) {
+        std::cout << "Byte " << ix << " = " << (int)message->at(ix) << ", ";
+    }
+    if ( nBytes > 0 ) {
+        std::cout << "stamp = " << deltatime << std::endl;
+    }
+#endif
+}
+
+
+/**
+ * @brief midiInit
+ */
+static bool midiInit( void )
+{
+    RtMidiIn *midiin = NULL;
+
+    // initialize MIDI iunput
+    try {
+        midiin = new RtMidiIn();
+
+        if ( chooseMidiPort( midiin ) == false ) {
+            goto cleanup;
+        }
+        midiin->setCallback( &midiInCallback, NULL );
+
+        // Don't ignore sysex, timing, or active sensing messages.
+        midiin->ignoreTypes( false, false, false );
+    } catch ( RtMidiError &error ) {
+        error.printMessage();
+        return false;
+    }
+    return true;
+
+cleanup:
+    delete midiin;
+    return false;
+}
+
+
+
+
 
 /**
  * @brief write_callback
@@ -29,7 +135,7 @@ static void write_callback(
     int err;
 
     const struct SoundIoChannelLayout *layout = &outstream->layout;
-    
+
     float seconds_per_frame = 1.0f / outstream->sample_rate;
     int   frames_left = frame_count_max;
     while (frames_left > 0) {
@@ -46,10 +152,9 @@ static void write_callback(
             break;
         }
 
-        float pitch = 440.0f;
         float radians_per_second = pitch * 2.0f * PI;
         for (int frame = 0; frame < frame_count; frame += 1) {
-            float sample = sin((seconds_offset + frame * seconds_per_frame) * radians_per_second);
+            float sample = sin((seconds_offset + frame * seconds_per_frame) * radians_per_second) * volume;
             for (int ch = 0; ch < layout->channel_count; ch += 1) {
                 float *ptr = (float*)(areas[ch].ptr + areas[ch].step * frame);
                 *ptr = sample;
@@ -70,11 +175,16 @@ static void write_callback(
 
 /**
  * @brief main
+ * @param[in]  argc
+ * @param[in]  argv
  */
 int main(int argc, char *argv[])
 {
-    int err;
+    midiInit();
 
+
+
+    int err;
     struct SoundIo *soundio = soundio_create();
     if (!soundio) {
         fprintf(stderr, "out of memory\n");
@@ -107,7 +217,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "out of memory\n");
         return 1;
     }
-    outstream->format = SoundIoFormatFloat32NE;
+    outstream->format         = SoundIoFormatFloat32NE;
     outstream->write_callback = write_callback;
 
     if ((err = soundio_outstream_open(outstream))) {
@@ -123,11 +233,14 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    for (;;)
+    for (;;) {
         soundio_wait_events(soundio);
+    }
 
     soundio_outstream_destroy(outstream);
     soundio_device_unref(device);
     soundio_destroy(soundio);
+
     return 0;
 }
+
