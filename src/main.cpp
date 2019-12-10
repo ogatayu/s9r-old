@@ -1,121 +1,20 @@
-// qmidiin.cpp
+/**
+ * @file main.cpp
+ */
+
 #include <iostream>
 #include <cstdlib>
-#include <signal.h>
 #include <unistd.h>
 #include <math.h>
 
 #include <soundio/soundio.h>
 
-#include "RtMidi.h"
+#include "common.h"
+#include "synth.h"
+#include "midi.h"
 
 float pitch = 440.0f;
-float volume = 1.0;
-
-/**
- * @brief chooseMidiPort
- * @param[in,out] rtmidi
- */
-static bool chooseMidiPort( RtMidiIn *rtmidi )
-{
-    std::string portName;
-    unsigned int ix = 0, nPorts = rtmidi->getPortCount();
-    if ( nPorts == 0 ) {
-        std::cout << "No input ports available!" << std::endl;
-        return false;
-    }
-
-    if ( nPorts == 1 ) {
-        std::cout << "\nOpening " << rtmidi->getPortName() << std::endl;
-    }
-    else {
-        for ( ix=0; ix<nPorts; ix++ ) {
-            portName = rtmidi->getPortName(ix);
-            std::cout << "  Input port #" << ix << ": " << portName << '\n';
-        }
-
-        do {
-            std::cout << "\nChoose a port number: ";
-            std::cin >> ix;
-        } while ( ix >= nPorts );
-        std::string keyHit;
-        std::getline( std::cin, keyHit );  // used to clear out stdin
-    }
-
-    rtmidi->openPort( ix );
-
-  return true;
-}
-
-/**
- * @brief midiInCallback
- * @param[in]  deltatime
- * @param[in]  message
- * @param[in]  userData
- */
-static void midiInCallback( double deltatime, std::vector< unsigned char > *message, void * userData )
-{
-    const unsigned int nBytes = message->size();
-    if(nBytes <= 0) { return; }
-
-    int const nKind = message->at(0) & 0xF0;
-
-    switch( nKind ) {
-        case 0x80:  // ノートオフ
-            volume = 0.0f;
-            break;
-        case 0x90:  // ノートオン
-            float notenum = message->at(1);
-            pitch = 440.0 * pow(2.0, (notenum - 69.0) / 12.0);
-
-            float velocity = message->at(2);
-            volume = velocity / 127.0f;
-            break;
-    }
-
-#if 1
-    for ( unsigned int ix=0; ix<nBytes; ix++ ) {
-        std::cout << "Byte " << ix << " = " << (int)message->at(ix) << ", ";
-    }
-    if ( nBytes > 0 ) {
-        std::cout << "stamp = " << deltatime << std::endl;
-    }
-#endif
-}
-
-
-/**
- * @brief midiInit
- */
-static bool midiInit( void )
-{
-    RtMidiIn *midiin = NULL;
-
-    // initialize MIDI iunput
-    try {
-        midiin = new RtMidiIn();
-
-        if ( chooseMidiPort( midiin ) == false ) {
-            goto cleanup;
-        }
-        midiin->setCallback( &midiInCallback, NULL );
-
-        // Don't ignore sysex, timing, or active sensing messages.
-        midiin->ignoreTypes( false, false, false );
-    } catch ( RtMidiError &error ) {
-        error.printMessage();
-        return false;
-    }
-    return true;
-
-cleanup:
-    delete midiin;
-    return false;
-}
-
-
-
-
+int NoteNumber = 1;
 
 /**
  * @brief write_callback
@@ -124,12 +23,10 @@ cleanup:
  * @param[in]  frame_count_min
  * @param[in]  frame_count_max
  */
-static const float PI             = 3.1415926535f;
-static float       seconds_offset = 0.0f;
 static void write_callback(
     struct SoundIoOutStream *outstream,
-    int                      frame_count_min,
-    int                      frame_count_max
+    int frame_count_min,
+    int frame_count_max
     )
 {
     int err;
@@ -152,15 +49,36 @@ static void write_callback(
             break;
         }
 
-        float radians_per_second = pitch * 2.0f * PI;
-        for (int frame = 0; frame < frame_count; frame += 1) {
-            float sample = sin((seconds_offset + frame * seconds_per_frame) * radians_per_second) * volume;
-            for (int ch = 0; ch < layout->channel_count; ch += 1) {
+        for (int frame = 0; frame < frame_count; frame++) {
+            // chごとに出力
+            for (int ch = 0; ch < layout->channel_count; ch++) {
                 float *ptr = (float*)(areas[ch].ptr + areas[ch].step * frame);
-                *ptr = sample;
+                *ptr = 0;
             }
         }
-        seconds_offset = fmod(seconds_offset + seconds_per_frame * frame_count, 1.0);
+
+        // 押されたキーを検索
+        for(int nn=0; nn<128; nn++) {
+            if( midiKeyTable[nn].isPressed ) {
+                // 波形作成
+                int p = midiKeyTable[nn].m_p;
+                float v = (float)midiKeyTable[nn].velocity / 127.0f;
+                int w = synthGetW(nn, 0, 0);
+
+                for (int frame = 0; frame < frame_count; frame++) {
+                    float sample = synthGetWave( p ) * v;
+
+                    // chごとに出力
+                    for (int ch = 0; ch < layout->channel_count; ch++) {
+                        float *ptr = (float*)(areas[ch].ptr + areas[ch].step * frame);
+                        *ptr += sample;
+                    }
+                    p += w;
+                }
+
+                midiKeyTable[nn].m_p = p;
+            }
+        }
 
         err = soundio_outstream_end_write(outstream);
         if (err) {
@@ -180,9 +98,8 @@ static void write_callback(
  */
 int main(int argc, char *argv[])
 {
+    synthInit();
     midiInit();
-
-
 
     int err;
     struct SoundIo *soundio = soundio_create();
@@ -220,13 +137,17 @@ int main(int argc, char *argv[])
     outstream->format         = SoundIoFormatFloat32NE;
     outstream->write_callback = write_callback;
 
+
     if ((err = soundio_outstream_open(outstream))) {
         fprintf(stderr, "unable to open device: %s", soundio_strerror(err));
         return 1;
     }
 
-    if (outstream->layout_error)
+    if (outstream->layout_error) {
         fprintf(stderr, "unable to set channel layout: %s\n", soundio_strerror(outstream->layout_error));
+    }
+
+    fprintf(stderr, "outstream->sample_rate: %d\n", outstream->sample_rate);
 
     if ((err = soundio_outstream_start(outstream))) {
         fprintf(stderr, "unable to start device: %s\n", soundio_strerror(err));
