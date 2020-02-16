@@ -9,9 +9,22 @@ download_project(PROJ googletest
 
 add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR})
 
-add_executable(gtestExample gtest_example.cpp)
-target_link_libraries(gtestExample gtest_main)
+# lists poduct source
+set(MY_SRCS_MINUS_MAIN ${MY_SRCS})
+list(REMOVE_ITEM MY_SRCS_MINUS_MAIN ${PROJECT_SOURCE_DIR}/src/main.cpp)
+
+# lists test source
+file(GLOB MY_TEST_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+
+add_executable(
+    gtestExecutor
+
+    ${MY_TEST_SRCS}
+    ${MY_SRCS_MINUS_MAIN}
+    )
+
+target_link_libraries(gtestExecutor gtest_main ${LINKLIBS})
 include_directories(${PROJECT_SOURCE_DIR}/src)
 
 include(GoogleTest)
-gtest_add_tests(TARGET gtestExample)
+gtest_add_tests(TARGET gtestExecutor)
