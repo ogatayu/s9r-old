@@ -12,6 +12,9 @@ private:
     Synth& operator=(const Synth&);
     static Synth* instance_;
 
+    // param
+    float tuning_, fs_;
+
     void Initialize();
 
 public:

@@ -4,6 +4,8 @@
  * @brief
  * @note  this class is singleton
  */
+#include <stdio.h>
+
 #include <cstdint>
 #include <math.h>
 
@@ -98,6 +100,53 @@ const float Waveform::GetSine( float phase )
 }
 
 /**
+ * 周波数から最適な（＝倍音がナイキストを超えない）波形テーブルを求める
+ * @param wf   波形の種類
+ * @param freq 周波数
+ */
+float* Waveform::GetWTFromNoteNo( int wf, float freq )
+{
+    if( wf==WF_SINE ) {
+        return &wt_sine_[0];
+    }
+    else {
+        float* p_tbl = (wf==WF_TRI) ? &wt_triangle_[0] : ((wf==WF_SAW) ? &wt_saw_[0] : &wt_square_[0]);
+        for( int ix=0; ix < wt_info_num_; ix++ ) {
+            if(freq <= wt_info_[ix].freq) {
+                return p_tbl + (WT_SIZE * ix);
+            }
+        }
+    }
+
+    return &wt_sine_[0];
+}
+
+/**
+ * NoteNo,デチューン(セント単位)から、角速度(1周期＝WT_SIZEの16:16固定小数点表現)を求める
+ * @param nn       NoteNumber
+ * @param det      detune val
+ */
+uint32_t Waveform::CalcWFromNoteNo( float nn, float det )
+{
+    // NoteNo、デチューン値から発振周波数fを求める noteNo=69(A4)で440Hz
+    // ※デチューン値：100セントで1NoteNo分のピッチに相当する
+    float f = tuning_ * pow( 2.f, ( nn+det/100.f-69.f) / 12.f );
+
+    // 角速度(1周期＝WT_SIZEの16:16固定小数点表現)へ変換
+    return (uint32_t)( WT_SIZE * (1<<16) * f/fs_ );
+}
+
+/**
+ * 周波数から、角速度(1周期＝WT_SIZEの16:16固定小数点表現)を求める
+ * @param freq 周波数
+ */
+uint32_t Waveform::CalcWFromFreq( float freq )
+{
+    // 角速度(1周期＝WT_SIZEの16:16固定小数点表現)へ変換
+    return (uint32_t)( WT_SIZE * (1<<16) * freq/fs_ );
+}
+
+/**
  * GetWave
  * @param phase
  */
@@ -110,47 +159,7 @@ static float GetWave( float* p_tbl, int fp_phase )
     int idx  = _IDX(fp_phase,0);                               // 整数部の取り出し
     int idx2 = _IDX(fp_phase,1);                               // 補間用に、idxの次のidxを求める。単純に+1すると範囲オーバーの可能性有り。
     float deci = (float)(fp_phase & ((1<<16)-1)) / (1<<16);    // 少数部の取り出し(上位16ビットをクリアし、1/65536倍する)
-    return p_tbl[idx] + (p_tbl[idx2] - p_tbl[idx]) * deci;  // 線形補完で出力
-}
-
-/**
- * NoteNoから最適な（＝倍音がナイキストを超えない）波形テーブルを求める
- * @param wf 波形の種類
- * @param nn NoteNumber
- */
-float* Waveform::getWTFromNoteNo( int wf, float nn )
-{
-    if( wf==WF_SINE ) {
-        return &wt_sine_[0];
-    }
-    else {
-        // テーブル情報表を頭からサーチ。
-        // もしパフォーマンスが問題になる場合は、nnを適当に整数化したものとoffsetのマップテーブルを使う。
-        float* pTbl = (wf==WF_TRI) ? &wt_triangle_[0] : ((wf==WF_SAW) ? &wt_saw_[0] : &wt_square_[0]);
-        for( int ix=0; ix < wt_info_num_; ix++ ) {
-            if(nn <= wt_info_[ix].noteNo) {
-                return pTbl + (WT_SIZE * ix);
-            }
-        }
-    }
-
-    return &wt_sine_[0];
-}
-
-/**
- * NoteNo,デチューン(セント単位)から角速度を求める
- * @param nn       NoteNumber
- * @param det      detune val
- * @param fs
- */
-uint32_t Waveform::calcWFromNoteNo( float nn, float det, float fs )
-{
-    // NoteNo、デチューン値から発振周波数fを求める noteNo=69(A4)で440Hz
-    // ※デチューン値：100セントで1NoteNo分のピッチに相当する
-    float f = tuning_ * pow( 2.f, ( nn+det/100.f-69.f) / 12.f );
-
-    // 角速度(1周期＝WT_SIZEの16:16固定小数点表現)へ変換
-    return (uint32_t)( WT_SIZE * (1<<16) * f/fs );
+    return p_tbl[idx] + (p_tbl[idx2] - p_tbl[idx]) * deci;    // 線形補完で出力
 }
 
 /**
@@ -158,9 +167,10 @@ uint32_t Waveform::calcWFromNoteNo( float nn, float det, float fs )
  * @param nn       NoteNumber
  * @param fp_phase phase of 16:16 fixed-point number
  */
-const float Waveform::GetTriangle( int nn, int fp_phase )
+const float Waveform::GetTriangle( float freq, int fp_phase )
 {
-
+    float* p_tbl = GetWTFromNoteNo( WF_TRI, freq );
+    return GetWave( p_tbl, fp_phase );
 }
 
 /**
@@ -168,19 +178,20 @@ const float Waveform::GetTriangle( int nn, int fp_phase )
  * @param nn       NoteNumber
  * @param fp_phase phase of 16:16 fixed-point number
  */
-const float Waveform::GetSaw( int nn, float fp_phase )
+const float Waveform::GetSaw( float freq, int fp_phase )
 {
 
 }
 
 /**
  * GetSquare
- * @param nn       NoteNumber
+ * @param nn     freq
  * @param fp_phase phase of 16:16 fixed-point number
  */
-const float Waveform::GetSquare( int nn, float fp_phase )
+const float Waveform::GetSquare( float freq, int fp_phase )
 {
-
+    float* p_tbl = GetWTFromNoteNo( WF_TRI, freq );
+    return GetWave( p_tbl, fp_phase );
 }
 
 /**
