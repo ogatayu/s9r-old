@@ -37,7 +37,10 @@ Synth* Synth::GetInstance()
  */
 void Synth::Initialize()
 {
-    Waveform::Create( 440.0, 44100.0 );
+    tuning_ = 440.0;
+    fs_     = 44100.0;
+
+    Waveform::Create( tuning_, fs_ );
     Waveform* wf = Waveform::GetInstance();
 
 }
