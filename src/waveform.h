@@ -57,7 +57,7 @@ public:
     uint32_t CalcWFromFreq( float freq );
 
     const float GetSine( float phase );
-    const float GetTriangle( float freq, int fp_phase );
-    const float GetSaw( float freq, int fp_phase );
-    const float GetSquare( float freq, int fp_phase );
+    const float GetTriangle( float freq, int fixed_phase );
+    const float GetSaw( float freq, int fixed_phase );
+    const float GetSquare( float freq, int fixed_phase );
 };
