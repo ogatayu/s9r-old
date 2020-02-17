@@ -37,10 +37,35 @@ namespace{
         Waveform* wf = Waveform::GetInstance();
         int p = 0;
         uint32_t w = wf->CalcWFromFreq( 440.0 );
-        for( int ix=0; ix<1000; ix++) {
+        for( int ix=0; ix<256; ix++) {
             float val = wf->GetTriangle( 440.0, p );
-            printf("%f\n", ix, val);
+            printf("%f,", ix, val);
             p += w;
         }
+        printf("\n");
+    }
+
+    TEST_F(WaveformTest, GetSaw){
+        Waveform* wf = Waveform::GetInstance();
+        int p = 0;
+        uint32_t w = wf->CalcWFromFreq( 440.0 );
+        for( int ix=0; ix<256; ix++) {
+            float val = wf->GetSaw( 440.0, p );
+            printf("%f,", ix, val);
+            p += w;
+        }
+        printf("\n");
+    }
+
+    TEST_F(WaveformTest, GetSquare){
+        Waveform* wf = Waveform::GetInstance();
+        int p = 0;
+        uint32_t w = wf->CalcWFromFreq( 440.0 );
+        for( int ix=0; ix<256; ix++) {
+            float val = wf->GetSquare( 440.0, p );
+            printf("%f,", ix, val);
+            p += w;
+        }
+        printf("\n");
     }
 }

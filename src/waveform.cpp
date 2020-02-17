@@ -148,50 +148,52 @@ uint32_t Waveform::CalcWFromFreq( float freq )
 
 /**
  * GetWave
+ * @param p_tbl
  * @param phase
  */
-static float GetWave( float* p_tbl, int fp_phase )
+static float GetWave( float* p_tbl, int fixed_phase )
 {
     // 16:16の固定小数からインデックス(=整数部)を取り出すマクロ
     // x:固定小数点による位相、y:インデックスオフセット
     #define _IDX(x,y)   (((y)+((x)>>16))&(WT_SIZE-1))
 
-    int idx  = _IDX(fp_phase,0);                               // 整数部の取り出し
-    int idx2 = _IDX(fp_phase,1);                               // 補間用に、idxの次のidxを求める。単純に+1すると範囲オーバーの可能性有り。
-    float deci = (float)(fp_phase & ((1<<16)-1)) / (1<<16);    // 少数部の取り出し(上位16ビットをクリアし、1/65536倍する)
-    return p_tbl[idx] + (p_tbl[idx2] - p_tbl[idx]) * deci;    // 線形補完で出力
+    int idx  = _IDX(fixed_phase,0);                               // 整数部の取り出し
+    int idx2 = _IDX(fixed_phase,1);                               // 補間用に、idxの次のidxを求める。単純に+1すると範囲オーバーの可能性有り。
+    float deci = (float)(fixed_phase & ((1<<16)-1)) / (1<<16);    // 少数部の取り出し(上位16ビットをクリアし、1/65536倍する)
+    return p_tbl[idx] + (p_tbl[idx2] - p_tbl[idx]) * deci;     // 線形補完で出力
 }
 
 /**
  * GetTriangle
- * @param nn       NoteNumber
- * @param fp_phase phase of 16:16 fixed-point number
+ * @param freq     freq
+ * @param fixed_phase phase of 16:16 fixed-point number
  */
-const float Waveform::GetTriangle( float freq, int fp_phase )
+const float Waveform::GetTriangle( float freq, int fixed_phase )
 {
     float* p_tbl = GetWTFromNoteNo( WF_TRI, freq );
-    return GetWave( p_tbl, fp_phase );
+    return GetWave( p_tbl, fixed_phase );
 }
 
 /**
  * GetSaw
- * @param nn       NoteNumber
- * @param fp_phase phase of 16:16 fixed-point number
+ * @param freq     freq
+ * @param fixed_phase phase of 16:16 fixed-point number
  */
-const float Waveform::GetSaw( float freq, int fp_phase )
+const float Waveform::GetSaw( float freq, int fixed_phase )
 {
-
+    float* p_tbl = GetWTFromNoteNo( WF_SAW, freq );
+    return GetWave( p_tbl, fixed_phase );
 }
 
 /**
  * GetSquare
- * @param nn     freq
- * @param fp_phase phase of 16:16 fixed-point number
+ * @param freq     freq
+ * @param fixed_phase phase of 16:16 fixed-point number
  */
-const float Waveform::GetSquare( float freq, int fp_phase )
+const float Waveform::GetSquare( float freq, int fixed_phase )
 {
-    float* p_tbl = GetWTFromNoteNo( WF_TRI, freq );
-    return GetWave( p_tbl, fp_phase );
+    float* p_tbl = GetWTFromNoteNo( WF_SQUARE, freq );
+    return GetWave( p_tbl, fixed_phase );
 }
 
 /**
