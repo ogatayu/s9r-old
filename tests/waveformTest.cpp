@@ -27,10 +27,32 @@ namespace{
 
     TEST_F(WaveformTest, GetSine){
         Waveform* wf = Waveform::GetInstance();
-        EXPECT_EQ  ( sin(0.0     * PI), wf->GetSine(0.0     * PI) );         // 0 * pi
-        EXPECT_NEAR( sin(1.0/2.0 * PI), wf->GetSine(1.0/2.0 * PI), 0.00001); // 1/2 * pi
-        EXPECT_NEAR( sin(1.0     * PI), wf->GetSine(1.0     * PI), 0.00001); // pi
-        EXPECT_NEAR( sin(3.0/2.0 * PI), wf->GetSine(3.0/2.0 * PI), 0.00001); // 3/2 * pi
+        // 0 * pi
+        EXPECT_EQ(
+            sin(0.0 * PI),
+            wf->GetSine( (WT_SIZE<<16) * 0.0 )
+            );
+
+        // 1/2 * pi
+        EXPECT_NEAR(
+            sin(1.0/2.0 * PI),
+            wf->GetSine( (WT_SIZE<<16) * (1.0/2.0) * 0.5 ),
+            0.00001
+            );
+
+        // pi
+        EXPECT_NEAR(
+            sin(1.0 * PI),
+            wf->GetSine( (WT_SIZE<<16) * 1.0 * 0.5 ),
+            0.00001
+            );
+
+        // 3/2 * pi
+        EXPECT_NEAR(
+            sin(3.0/2.0 * PI),
+            wf->GetSine( (WT_SIZE<<16) * (3.0/2.0) * 0.5 ),
+            0.00001
+            );
     }
 
     TEST_F(WaveformTest, GetTriangle){

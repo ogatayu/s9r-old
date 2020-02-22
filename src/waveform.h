@@ -40,7 +40,7 @@ private:
     void GenTblSaw(float* p_buf, int harmo_num);
     void GenTblSquare(float* p_buf, int harmo_num);
 
-    float* GetWTFromNoteNo( int wf, float freq );
+    float* GetWTFromFreq( int wf, float freq );
 
 public:
     // wave form type
@@ -56,7 +56,8 @@ public:
     uint32_t CalcWFromNoteNo( float nn, float det );
     uint32_t CalcWFromFreq( float freq );
 
-    const float GetSine( float phase );
+    // 位相は16:16の固定小数で扱う
+    const float GetSine( int fixed_phase );
     const float GetTriangle( float freq, int fixed_phase );
     const float GetSaw( float freq, int fixed_phase );
     const float GetSquare( float freq, int fixed_phase );

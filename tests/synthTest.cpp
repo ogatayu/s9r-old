@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <math.h>
+#include "audio.h"
 #include "synth.h"
 
 namespace{
@@ -9,12 +10,14 @@ namespace{
     protected:
         virtual void SetUp()
         {
-            Synth::Create();
+            AudioCtrl::Create();
+            Synth::Create( 440.0 );
         }
 
         virtual void TearDown()
         {
             Synth::Destroy();
+            AudioCtrl::Destroy();
         }
     };
 

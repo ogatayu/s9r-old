@@ -22,6 +22,7 @@ static void write_callback(
 
 AudioCtrl* AudioCtrl::instance_ = nullptr;
 
+
 /**
  * @brief Create
  */
@@ -40,6 +41,10 @@ AudioCtrl* AudioCtrl::Create()
  */
 void AudioCtrl::Destroy()
 {
+    soundio_outstream_destroy(instance_->outstream_);
+    soundio_device_unref(instance_->device_);
+    soundio_destroy(instance_->soundio_);
+
     delete instance_;
     instance_ = nullptr;
 }
@@ -157,10 +162,6 @@ bool AudioCtrl::Start()
     for (;;) {
         soundio_wait_events(soundio_);
     }
-
-    soundio_outstream_destroy(outstream_);
-    soundio_device_unref(device_);
-    soundio_destroy(soundio_);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -276,4 +277,13 @@ void AudioCtrl::SignalCallbackSet( SignalCallbackFunc func, void* userdata )
 {
     signal_callback_func_     = func;
     signal_callback_userdata_ = userdata;
+}
+
+/**
+ * @brief SignalCallbackSet
+ */
+void AudioCtrl::SignalCallbackUnset()
+{
+    signal_callback_func_     = nullptr;
+    signal_callback_userdata_ = nullptr;
 }

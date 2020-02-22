@@ -53,7 +53,6 @@ bool MidiCtrl::Initialize()
     RtMidiIn *midiin = NULL;
 
     // init class
-    Synth::Create();
     synth_ = Synth::GetInstance();
 
     // initialize MIDI iunput
