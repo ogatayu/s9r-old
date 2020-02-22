@@ -16,7 +16,7 @@
 
 Waveform* Waveform::instance_ = nullptr;
 
-static float waveform_fastsin( unsigned int phase );
+static float fastsin( unsigned int phase );
 
 Waveform* Waveform::Create( float tuning, float fs )
 {
@@ -52,7 +52,7 @@ void Waveform::Initialize( float tuning, float fs )
     // サイン波テーブル生成
     for( int ix=0; ix<WT_SIZE; ix++ ) {
 #if 0
-        wt_sine_[ix] = waveform_fastsin( (UINT32_MAX / WT_SIZE) * ix );
+        wt_sine_[ix] = fastsin( (UINT32_MAX / WT_SIZE) * ix );
 #else
         wt_sine_[ix] = sin( 2.f * PI * ix / WT_SIZE );
 #endif
@@ -96,7 +96,7 @@ void Waveform::Initialize( float tuning, float fs )
  */
 const float Waveform::GetSine( float phase )
 {
-    return waveform_fastsin( (phase / (2.0*PI)) * UINT32_MAX );
+    return fastsin( (phase / (2.0*PI)) * UINT32_MAX );
 }
 
 /**
@@ -157,15 +157,15 @@ static float GetWave( float* p_tbl, int fixed_phase )
     // x:固定小数点による位相、y:インデックスオフセット
     #define _IDX(x,y)   (((y)+((x)>>16))&(WT_SIZE-1))
 
-    int idx  = _IDX(fixed_phase,0);                               // 整数部の取り出し
-    int idx2 = _IDX(fixed_phase,1);                               // 補間用に、idxの次のidxを求める。単純に+1すると範囲オーバーの可能性有り。
+    int idx  = _IDX( fixed_phase, 0 );                               // 整数部の取り出し
+    int idx2 = _IDX( fixed_phase, 1 );                               // 補間用に、idxの次のidxを求める。単純に+1すると範囲オーバーの可能性有り。
     float deci = (float)(fixed_phase & ((1<<16)-1)) / (1<<16);    // 少数部の取り出し(上位16ビットをクリアし、1/65536倍する)
     return p_tbl[idx] + (p_tbl[idx2] - p_tbl[idx]) * deci;     // 線形補完で出力
 }
 
 /**
  * GetTriangle
- * @param freq     freq
+ * @param freq        freq
  * @param fixed_phase phase of 16:16 fixed-point number
  */
 const float Waveform::GetTriangle( float freq, int fixed_phase )
@@ -176,7 +176,7 @@ const float Waveform::GetTriangle( float freq, int fixed_phase )
 
 /**
  * GetSaw
- * @param freq     freq
+ * @param freq        freq
  * @param fixed_phase phase of 16:16 fixed-point number
  */
 const float Waveform::GetSaw( float freq, int fixed_phase )
@@ -187,7 +187,7 @@ const float Waveform::GetSaw( float freq, int fixed_phase )
 
 /**
  * GetSquare
- * @param freq     freq
+ * @param freq        freq
  * @param fixed_phase phase of 16:16 fixed-point number
  */
 const float Waveform::GetSquare( float freq, int fixed_phase )
@@ -245,7 +245,7 @@ void Waveform::GenTblSquare(float* p_buf, int harmo_num)
  * a Fast sine func
  * @param phase
  */
-static float waveform_fastsin( unsigned int phase )
+static float fastsin( unsigned int phase )
 {
     const float frf3 = -1.0f / 6.0f;
     const float frf5 = 1.0f / 120.0f;

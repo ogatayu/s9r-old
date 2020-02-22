@@ -10,25 +10,51 @@
 #include "midi.h"
 
 
-int midiOnNoteNum = 0;
-int midiOnNoteList[MIDI_ON_NOTE_MAX];
-
-MIDI_KEY_TABLE midiKeyTable[128] = { 0 };
-
-
-/**
- * プロトタイプ宣言
- */
+static void midi_input_callback( double deltatime, std::vector< unsigned char > *message, void * user_data );
 static bool midi_choose_port( RtMidiIn *rtmidi );
-static void midi_in_callback( double deltatime, std::vector< unsigned char > *message, void * userData );
 
+MidiCtrl* MidiCtrl::instance_ = nullptr;
 
 /**
- * @brief midiInit
+ * @brief Create
  */
-bool midiInit( void )
+MidiCtrl* MidiCtrl::Create()
+{
+    if (!instance_)
+    {
+        instance_ = new MidiCtrl;
+        instance_->Initialize();
+    }
+    return instance_;
+}
+
+/**
+ * @brief Destroy
+ */
+void MidiCtrl::Destroy()
+{
+    delete instance_;
+    instance_ = nullptr;
+}
+
+/**
+ * @brief GetInstance
+ */
+MidiCtrl* MidiCtrl::GetInstance()
+{
+    return instance_;
+}
+
+/**
+ * @brief initialize class
+ */
+bool MidiCtrl::Initialize()
 {
     RtMidiIn *midiin = NULL;
+
+    // init class
+    Synth::Create();
+    synth_ = Synth::GetInstance();
 
     // initialize MIDI iunput
     try {
@@ -37,7 +63,7 @@ bool midiInit( void )
         if ( midi_choose_port( midiin ) == false ) {
             goto cleanup;
         }
-        midiin->setCallback( &midi_in_callback, NULL );
+        midiin->setCallback( &midi_input_callback, synth_ );
 
         // Don't ignore sysex, timing, or active sensing messages.
         midiin->ignoreTypes( false, false, false );
@@ -52,6 +78,41 @@ cleanup:
     return false;
 }
 
+/**
+ * @brief midi_in_callback
+ * @param[in]  deltatime
+ * @param[in]  message
+ * @param[in]  user_data
+ */
+static void midi_input_callback( double deltatime, std::vector< unsigned char > *message, void * user_data )
+{
+    Synth* synth = (Synth*)user_data;
+    const unsigned int bytes = message->size();
+    if(bytes <= 0) { return; }
+
+    const int kind     = message->at(0) & 0xF0;
+    const int notenum  = message->at(1);
+    const int velocity = message->at(2);
+
+    switch( kind ) {
+        case 0x80:  // Note on
+            synth->NoteOn( notenum, velocity );
+            break;
+
+        case 0x90:  // Note off
+            synth->NoteOff( notenum, velocity );
+            break;
+    }
+
+#if 1
+    for ( unsigned int ix=0; ix<bytes; ix++ ) {
+        std::cout << "Byte " << ix << " = " << (int)message->at(ix) << ", ";
+    }
+    if ( bytes > 0 ) {
+        std::cout << "stamp = " << deltatime << std::endl;
+    }
+#endif
+}
 
 /**
  * @brief midi_choose_port
@@ -88,45 +149,3 @@ static bool midi_choose_port( RtMidiIn *rtmidi )
   return true;
 }
 
-/**
- * @brief midi_in_callback
- * @param[in]  deltatime
- * @param[in]  message
- * @param[in]  userData
- */
-#include <math.h>
-static void midi_in_callback( double deltatime, std::vector< unsigned char > *message, void * userData )
-{
-    const unsigned int nBytes = message->size();
-    if(nBytes <= 0) { return; }
-
-    const int nKind    = message->at(0) & 0xF0;
-    const int notenum  = message->at(1);
-    const int velocity = message->at(2);
-
-    switch( nKind ) {
-        case 0x80:  // ノートオフ
-            midiKeyTable[notenum].isPressed = false;
-            if( midiOnNoteNum > 0) {
-                midiOnNoteNum--;
-            }
-            break;
-
-        case 0x90:  // ノートオン
-            midiKeyTable[notenum].velocity  = velocity;
-            midiKeyTable[notenum].isPressed = true;
-
-            midiOnNoteList[midiOnNoteNum] = notenum;
-            midiOnNoteNum++;
-            break;
-    }
-
-#if 1
-    for ( unsigned int ix=0; ix<nBytes; ix++ ) {
-        std::cout << "Byte " << ix << " = " << (int)message->at(ix) << ", ";
-    }
-    if ( nBytes > 0 ) {
-        std::cout << "stamp = " << deltatime << std::endl;
-    }
-#endif
-}
