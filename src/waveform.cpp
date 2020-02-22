@@ -40,7 +40,7 @@ Waveform* Waveform::GetInstance()
 }
 
 /**
- * initialize class
+ * @brief initialize class
  * @param freq
  * @param fs
  */
@@ -91,20 +91,11 @@ void Waveform::Initialize( float tuning, float fs )
 }
 
 /**
- * GetSine
- * @param phase
- */
-const float Waveform::GetSine( float phase )
-{
-    return fastsin( (phase / (2.0*PI)) * UINT32_MAX );
-}
-
-/**
- * 周波数から最適な（＝倍音がナイキストを超えない）波形テーブルを求める
+ * @brief 周波数から最適な（＝倍音がナイキストを超えない）波形テーブルを求める
  * @param wf   波形の種類
  * @param freq 周波数
  */
-float* Waveform::GetWTFromNoteNo( int wf, float freq )
+float* Waveform::GetWTFromFreq( int wf, float freq )
 {
     if( wf==WF_SINE ) {
         return &wt_sine_[0];
@@ -122,9 +113,9 @@ float* Waveform::GetWTFromNoteNo( int wf, float freq )
 }
 
 /**
- * NoteNo,デチューン(セント単位)から、角速度(1周期＝WT_SIZEの16:16固定小数点表現)を求める
- * @param nn       NoteNumber
- * @param det      detune val
+ * @brief NoteNo,デチューン(セント単位)から、角速度(1周期＝WT_SIZEの16:16固定小数点表現)を求める
+ * @param nn   NoteNumber
+ * @param det  detune val
  */
 uint32_t Waveform::CalcWFromNoteNo( float nn, float det )
 {
@@ -137,7 +128,7 @@ uint32_t Waveform::CalcWFromNoteNo( float nn, float det )
 }
 
 /**
- * 周波数から、角速度(1周期＝WT_SIZEの16:16固定小数点表現)を求める
+ * @brief 周波数から、角速度(1周期＝WT_SIZEの16:16固定小数点表現)を求める
  * @param freq 周波数
  */
 uint32_t Waveform::CalcWFromFreq( float freq )
@@ -147,11 +138,11 @@ uint32_t Waveform::CalcWFromFreq( float freq )
 }
 
 /**
- * GetWave
+ * @brief get_wave
  * @param p_tbl
  * @param phase
  */
-static float GetWave( float* p_tbl, int fixed_phase )
+static float get_wave( float* p_tbl, int fixed_phase )
 {
     // 16:16の固定小数からインデックス(=整数部)を取り出すマクロ
     // x:固定小数点による位相、y:インデックスオフセット
@@ -163,37 +154,47 @@ static float GetWave( float* p_tbl, int fixed_phase )
     return p_tbl[idx] + (p_tbl[idx2] - p_tbl[idx]) * deci;     // 線形補完で出力
 }
 
+
 /**
- * GetTriangle
+ * @brief GetSine
+ * @param phase
+ */
+const float Waveform::GetSine( int fixed_phase )
+{
+    return get_wave(  &wt_sine_[0], fixed_phase );
+}
+
+/**
+ * @brief GetTriangle
  * @param freq        freq
  * @param fixed_phase phase of 16:16 fixed-point number
  */
 const float Waveform::GetTriangle( float freq, int fixed_phase )
 {
-    float* p_tbl = GetWTFromNoteNo( WF_TRI, freq );
-    return GetWave( p_tbl, fixed_phase );
+    float* p_tbl = GetWTFromFreq( WF_TRI, freq );
+    return get_wave( p_tbl, fixed_phase );
 }
 
 /**
- * GetSaw
+ * @brief GetSaw
  * @param freq        freq
  * @param fixed_phase phase of 16:16 fixed-point number
  */
 const float Waveform::GetSaw( float freq, int fixed_phase )
 {
-    float* p_tbl = GetWTFromNoteNo( WF_SAW, freq );
-    return GetWave( p_tbl, fixed_phase );
+    float* p_tbl = GetWTFromFreq( WF_SAW, freq );
+    return get_wave( p_tbl, fixed_phase );
 }
 
 /**
- * GetSquare
+ * @brief GetSquare
  * @param freq        freq
  * @param fixed_phase phase of 16:16 fixed-point number
  */
 const float Waveform::GetSquare( float freq, int fixed_phase )
 {
-    float* p_tbl = GetWTFromNoteNo( WF_SQUARE, freq );
-    return GetWave( p_tbl, fixed_phase );
+    float* p_tbl = GetWTFromFreq( WF_SQUARE, freq );
+    return get_wave( p_tbl, fixed_phase );
 }
 
 /**
@@ -242,7 +243,7 @@ void Waveform::GenTblSquare(float* p_buf, int harmo_num)
 
 
 /**
- * a Fast sine func
+ * a fast sine func
  * @param phase
  */
 static float fastsin( unsigned int phase )

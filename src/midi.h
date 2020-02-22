@@ -26,8 +26,6 @@ private:
     typedef struct _KEY_TABLE {
         int  velocity;
         bool isPressed;
-
-        unsigned int m_p;
     } MIDI_KEY_TABLE;
     MIDI_KEY_TABLE key_table_[128] = { 0 };
 

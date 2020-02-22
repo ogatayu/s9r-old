@@ -35,5 +35,6 @@ public:
     SignalCallbackFunc signal_callback_func_;
     void*              signal_callback_userdata_;
     void SignalCallbackSet( SignalCallbackFunc func, void* userdata );
+    void SignalCallbackUnset();
 
 };
