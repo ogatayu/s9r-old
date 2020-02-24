@@ -52,9 +52,6 @@ bool MidiCtrl::Initialize()
 {
     RtMidiIn *midiin = NULL;
 
-    // init class
-    synth_ = Synth::GetInstance();
-
     // initialize MIDI iunput
     try {
         midiin = new RtMidiIn();
@@ -62,7 +59,7 @@ bool MidiCtrl::Initialize()
         if ( midi_choose_port( midiin ) == false ) {
             goto cleanup;
         }
-        midiin->setCallback( &midi_input_callback, synth_ );
+        midiin->setCallback( &midi_input_callback, instance_ );
 
         // Don't ignore sysex, timing, or active sensing messages.
         midiin->ignoreTypes( false, false, false );
@@ -77,15 +74,15 @@ cleanup:
     return false;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+
 /**
  * @brief midi_in_callback
  * @param[in]  deltatime
  * @param[in]  message
- * @param[in]  user_data
  */
-static void midi_input_callback( double deltatime, std::vector< unsigned char > *message, void * user_data )
+void MidiCtrl::InputCallback( double deltatime, std::vector< unsigned char > *message )
 {
-    Synth* synth = (Synth*)user_data;
     const unsigned int bytes = message->size();
     if(bytes <= 0) { return; }
 
@@ -94,16 +91,17 @@ static void midi_input_callback( double deltatime, std::vector< unsigned char > 
     const int velocity = message->at(2);
 
     switch( kind ) {
-        case 0x80:  // Note on
-            synth->NoteOn( notenum, velocity );
+        case 0x80:  // Note off
+            if(dumper_) { dumper_table_[notenum] = true; }
+            else        { KeyOff(notenum); }
             break;
 
-        case 0x90:  // Note off
-            synth->NoteOff( notenum, velocity );
+        case 0x90:  // Note on
+            KeyOn( notenum, velocity );
             break;
     }
 
-#if 1
+#if 0
     for ( unsigned int ix=0; ix<bytes; ix++ ) {
         std::cout << "Byte " << ix << " = " << (int)message->at(ix) << ", ";
     }
@@ -112,6 +110,83 @@ static void midi_input_callback( double deltatime, std::vector< unsigned char > 
     }
 #endif
 }
+
+/**
+ * @brief midi_in_callback
+ * @param[in]  deltatime
+ * @param[in]  message
+ * @param[in]  user_data
+ */
+static void midi_input_callback( double deltatime, std::vector< unsigned char > *message, void * user_data )
+{
+    MidiCtrl* midictrl = (MidiCtrl*)user_data;
+    midictrl->InputCallback( deltatime, message );
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+/**
+ * @brief KeyOn
+ * @param[in] Note Num
+ * @param[in] v
+ */
+void MidiCtrl::KeyOn( int nn, int v )
+{
+    if( key_table_[nn] != 0 ) { KeyOff(nn); }
+    key_table_[nn]    =  v;
+    dumper_table_[nn] = false;
+    on_key_nn_list_[on_key_num_] = nn + 256;  // +256は新規押鍵フラグ
+    on_key_num_++;
+    is_status_changed_ = true;
+}
+
+/**
+ * @brief KeyOff
+ * @param[in] Note Num
+ * @param[in] v
+ */
+void MidiCtrl::KeyOff( int nn )
+{
+    key_table_[nn]     = 0;
+    is_status_changed_ = true;
+
+    // オンキーリストから、キーオフした鍵盤情報を取り除く
+    for( int i=0; i<on_key_num_; i++ ){
+        int onNN = on_key_nn_list_[i];
+        if( nn == ((onNN >= 256) ? onNN-256 : onNN) ) {
+            for( ; i<on_key_num_-1; i++ ) {
+                on_key_nn_list_[i] = on_key_nn_list_[i+1];
+            }
+            on_key_num_--;
+            return;
+        }
+    }
+}
+
+/**
+ * @brief IsStatusChanged
+ */
+bool MidiCtrl::IsStatusChanged()
+{
+    return is_status_changed_;
+};
+
+/**
+ * @brief ResetStatusChange
+ */
+bool MidiCtrl::ResetStatusChange()
+{
+    is_status_changed_ = FALSE;
+
+    // 新規押鍵フラグもすべて落とす
+    for( int i=0; i<m_onKeyNum; i++ ) {
+        if(on_key_nn_list_[i] >= 256) {
+            on_key_nn_list_[i] -= 256;
+        }
+    }
+};
+
+///////////////////////////////////////////////////////////////////////////////
 
 /**
  * @brief midi_choose_port
