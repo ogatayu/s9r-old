@@ -3,7 +3,7 @@
  */
 #pragma once
 
-#include "synth.h"
+#include <vector>
 
 class MidiCtrl {
 private:
@@ -16,22 +16,23 @@ private:
 
     bool Initialize();
 
-    Synth* synth_;
+    void KeyOn( int nn, int v );
+    void KeyOff( int nn );
 
-    /* midi state */
-    //int on_note_num_ = 0;
-    //int on_note_list_[MIDI_ON_NOTE_MAX];
-
-    /* midi key table */
-    typedef struct _KEY_TABLE {
-        int  velocity;
-        bool isPressed;
-    } MIDI_KEY_TABLE;
-    MIDI_KEY_TABLE key_table_[128] = { 0 };
-
+    int  on_key_num_;           // 押下中のキー数
+    int  key_table_[128];       // キーとベロシティとの対応表
+    int  on_key_nn_list_[128];  // 押下されたキーの順番を保持するリスト
+    bool dumper_;               // ダンパーペダルフラグ
+    bool dumper_table_[128];    // ダンパーオフで、リリースすべき鍵盤情報
+    bool is_status_changed_;    // キーの押下状態が変更されたかのフラグ
 
 public:
     static MidiCtrl* Create();
     static void      Destroy();
     static MidiCtrl* GetInstance();
+
+    void InputCallback( double deltatime, std::vector< unsigned char > *message );
+
+    bool IsStatusChanged();
+    bool ResetStatusChange();
 };

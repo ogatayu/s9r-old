@@ -90,4 +90,11 @@ namespace{
         }
         printf("\n");
     }
+
+    TEST_F(WaveformTest, CalcWFromNoteNo){
+        Waveform* wf = Waveform::GetInstance();
+
+        // A4(440Hz)
+        EXPECT_EQ( wf->CalcWFromNoteNo( 69, 0 ), wf->CalcWFromFreq( 440.0 ) );
+    }
 }
