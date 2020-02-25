@@ -3,6 +3,8 @@
  */
 #pragma once
 
+#include <list>
+
 /**
  * @class Voice
  */
@@ -15,8 +17,15 @@ private:
         }
         ~VCO(){}
 
-        uint32_t p_;
+        // variable
+        uint32_t p_;            // phase(16:16 fixed-point)
+        float    nn_;           // 発振指定されたノートNo
+        float    current_nn_;   // 現在発振中のノートNo（ノートNoを小数にする事でポルタメント中のノートNoを表現する）
+        float    porta_start_nn_;      // ポルタメント開始時のnoteNo
+        float    current_porta_time_;      // ポルタメント経過時間（1で正規化、0～1でポルタメント中）
+        float    porta_time_delta_;    // ポルタメント速度
 
+        void  SetNoteNo( int nn, bool is_key_on );
         float Calc( uint32_t w );
     };
 
@@ -54,12 +63,26 @@ public:
     Voice::VCF vcf;
     Voice::VCA vca;
 
+    int  voice_no_;  // Voice No.
     int  nn_;        // Note No.
     int  velocity_;  // velocity when key on
     bool key_on_;    // if key on then true
 
+
+    void Trigger(void);
+    void Release();
+
+    void SetNoteInfo(int nn,int velo);
+    void SetUnisonInfo(Voice* pMasterVoice, int unisonNum, int unisonNo);
+
+    int  GetNoteNo(void) { return nn_; };    // 発振ノートNoを返す
+
+    int  GetNo(void) { return voice_no_; };  // ボイス番号を返す
+    void SetNo(int no) { voice_no_ = no; };  // ボイス番号を返す
+
     float Calc( uint32_t w );
-    bool  IfPlaying();
+    bool  IsPlaying();
+    bool  IsKeyOn(void);
 };
 
 
@@ -72,12 +95,17 @@ private:
     void NoteOff( int notenum );
 
     // const
-    static const int kVoiceNum = 8;
+    static const int kVoiceNum = 128;
 
     // variable
-    int key_mode_ = 0;
+    int key_mode_;
+    int current_voice_no_;  // カレントボイス番号
+    int poly_num_;          // ポリモード時の最大ボイス数
+    int unison_num_;        // ユニゾンボイス数
 
-    Voice voice[kVoiceNum];
+    int mono_current_velocity_;  // モノモード時に使うワーク用ベロシテシティ値
+
+    Voice* voice[kVoiceNum];
 
     std::list<Voice*> on_voices_; // キーオン中のボイスリスト
 
@@ -85,10 +113,29 @@ private:
     void TriggerPoly();
     void TriggerMono();
 
-public:
-    void Trigger();
+    Voice* GetNextOffVoice();
 
-}
+public:
+    VoiceCtrl() {
+        key_mode_         = kPoly;
+        current_voice_no_ = 0;
+        unison_num_       = 1;
+        poly_num_         = 16;  // 16 voices
+        for(int ix; ix<kVoiceNum; ix++) {
+            voice[ix] = new Voice;
+        }
+    }
+    ~VoiceCtrl(){}
+
+    enum {
+        kPoly = 0,  // ポリ
+        kMono,      // モノ
+        kLegato     // レガート
+    };
+
+    void  Trigger();
+    float SignalProcess();
+};
 
 
 /**

@@ -174,12 +174,12 @@ bool MidiCtrl::IsStatusChanged()
 /**
  * @brief ResetStatusChange
  */
-bool MidiCtrl::ResetStatusChange()
+void MidiCtrl::ResetStatusChange()
 {
-    is_status_changed_ = FALSE;
+    is_status_changed_ = false;
 
     // 新規押鍵フラグもすべて落とす
-    for( int i=0; i<m_onKeyNum; i++ ) {
+    for( int i=0; i<on_key_num_; i++ ) {
         if(on_key_nn_list_[i] >= 256) {
             on_key_nn_list_[i] -= 256;
         }
