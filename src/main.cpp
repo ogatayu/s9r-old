@@ -12,8 +12,8 @@ int main(int argc, char *argv[])
 {
     // initialize
     AudioCtrl* audioctrl = AudioCtrl::Create();
-    Synth*     synth     = Synth::Create( 440.0 );
     MidiCtrl*  midictrl  = MidiCtrl::Create();
+    Synth*     synth     = Synth::Create( 440.0 );
 
     // s9r start!!!
     audioctrl->Start();

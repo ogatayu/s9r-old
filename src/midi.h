@@ -7,8 +7,17 @@
 
 class MidiCtrl {
 private:
-    MidiCtrl(){}
-    ~MidiCtrl(){}
+    MidiCtrl() {
+        on_key_num_        = 0;
+        dumper_            = false;
+        is_status_changed_ = false;
+        for( int ix=0; ix<128; ix++ ) {
+            key_table_[ix]      = 0;
+            on_key_nn_list_[ix] = 0;
+            dumper_table_[ix]   = 0;
+        }
+    }
+    ~MidiCtrl() {}
 
     MidiCtrl(const MidiCtrl&);
     MidiCtrl& operator=(const MidiCtrl&);
@@ -34,5 +43,24 @@ public:
     void InputCallback( double deltatime, std::vector< unsigned char > *message );
 
     bool IsStatusChanged();
-    bool ResetStatusChange();
+    void ResetStatusChange();
+
+    int GetVelocity(int nn) { return key_table_[nn]; };
+    int GetOnKeyNum(void)   { return on_key_num_; };
+
+    // n番目に新しい押鍵キーのノートNOを取得。なければ、-1を返す。
+    int GetOnKeyNN(int n)
+    {
+        if(n >= on_key_num_) return -1;
+        return on_key_nn_list_[on_key_num_-1-n];
+    };
+
+    // n番目に新しい新規押鍵キーのノートNOを取得。なければ、-1を返す。
+    int GetNewOnKeyNN(int n)
+    {
+        if(n >= on_key_num_) return -1;
+        int note_num = on_key_nn_list_[on_key_num_ -1-n];
+        if(note_num < 256) return -1;		// 新規ではない
+        return note_num-256;
+    };
 };
