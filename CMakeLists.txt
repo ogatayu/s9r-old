@@ -4,10 +4,20 @@ project(s9r)
 # Init variables
 set(LINKLIBS)
 
+# install libsoundio
+set(BUILD_DYNAMIC_LIBS OFF)
+set(BUILD_EXAMPLE_PROGRAMS OFF)
+set(BUILD_TESTS OFF)
+set(ENABLE_PULSEAUDIO OFF)
+set(ENABLE_ALSA OFF)
+add_subdirectory(lib/libsoundio)
+link_directories(lib/libsoundio)
+list(APPEND LINKLIBS libsoundio_static)
+
 # for Linux
 if(UNIX AND NOT APPLE)
   add_definitions(-D__UNIX_JACK__)
-  list(APPEND LINKLIBS jack pthread soundio m)
+  list(APPEND LINKLIBS jack pthread m)
 endif()
 
 # RtMidi
