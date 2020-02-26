@@ -10,7 +10,6 @@ Building
 # install requirements
 sudo apt install cmake libasound2-dev libjack-jackd2-dev
 
-
 # build & install libsoundio
 git clone https://github.com/andrewrk/libsoundio.git
 cd libsoundio
