@@ -1,7 +1,7 @@
 s9r
 ===
 
-This is software s(ynthesize)r.
+This is Virtual Analog S(ynthesize)r for Raspberry Pi (for now).
 
 Building
 ---
@@ -9,17 +9,6 @@ Building
 ```shell
 # install requirements
 sudo apt install cmake libasound2-dev libjack-jackd2-dev
-
-# build & install libsoundio
-git clone https://github.com/andrewrk/libsoundio.git
-cd libsoundio
-mkdir build
-cd build
-cmake ..
-make
-sudo make install
-
-# (interlude)
 
 # build s9r
 git clone https://github.com/y3o4xx/s9r.git
