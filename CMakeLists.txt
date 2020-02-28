@@ -4,15 +4,12 @@ project(s9r)
 # Init variables
 set(LINKLIBS)
 
-# install libsoundio
-set(BUILD_DYNAMIC_LIBS OFF)
+# Build libsoundio
 set(BUILD_EXAMPLE_PROGRAMS OFF)
 set(BUILD_TESTS OFF)
-set(ENABLE_PULSEAUDIO OFF)
-set(ENABLE_ALSA OFF)
 add_subdirectory(lib/libsoundio)
 link_directories(lib/libsoundio)
-list(APPEND LINKLIBS libsoundio_static)
+list(APPEND LINKLIBS libsoundio_shared)
 
 # for Linux
 if(UNIX AND NOT APPLE)
@@ -20,7 +17,7 @@ if(UNIX AND NOT APPLE)
   list(APPEND LINKLIBS jack pthread m)
 endif()
 
-# RtMidi
+# add RtMidi
 include_directories(${PROJECT_SOURCE_DIR}/lib/rtmidi)
 link_directories(${PROJECT_SOURCE_DIR}/lib/rtmidi)
 add_library(rtmidi STATIC ${PROJECT_SOURCE_DIR}/lib/rtmidi/RtMidi.cpp)
