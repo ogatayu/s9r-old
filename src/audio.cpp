@@ -28,10 +28,12 @@ AudioCtrl* AudioCtrl::instance_ = nullptr;
  */
 AudioCtrl* AudioCtrl::Create()
 {
-    if (!instance_)
-    {
+    if (!instance_) {
         instance_ = new AudioCtrl;
-        instance_->Initialize();
+        if( !(instance_->Initialize()) ) {
+            delete instance_;
+            instance_ = nullptr;
+        }
     }
     return instance_;
 }
@@ -68,6 +70,7 @@ static void underflow_callback(struct SoundIoOutStream *outstream) {
 bool AudioCtrl::Initialize()
 {
     int err;
+    enum SoundIoBackend backend = SoundIoBackendDummy;  // SoundIoBackendNone;
 
     // init libsoundio
     soundio_ = soundio_create();
@@ -76,7 +79,8 @@ bool AudioCtrl::Initialize()
         return false;
     }
 
-    err = soundio_connect(soundio_);
+    err = (backend == SoundIoBackendNone) ?
+        soundio_connect(soundio_) : soundio_connect_backend(soundio_, backend);
     if (err) {
         fprintf(stderr, "Unable to connect to backend: %s\n", soundio_strerror(err));
         return false;

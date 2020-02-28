@@ -15,15 +15,17 @@ list(REMOVE_ITEM MY_SRCS_MINUS_MAIN ${PROJECT_SOURCE_DIR}/src/main.cpp)
 
 # lists test source
 file(GLOB MY_TEST_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+file(GLOB MY_MOCK_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/mock/*.cpp)
 
 add_executable(
     gtestExecutor
 
+    ${MY_MOCK_SRCS}
     ${MY_TEST_SRCS}
     ${MY_SRCS_MINUS_MAIN}
     )
 
-target_link_libraries(gtestExecutor gtest_main ${LINKLIBS})
+target_link_libraries(gtestExecutor gtest_main gmock_main ${LINKLIBS})
 include_directories(${PROJECT_SOURCE_DIR}/src)
 
 include(GoogleTest)
