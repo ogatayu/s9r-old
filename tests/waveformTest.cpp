@@ -96,5 +96,8 @@ namespace{
 
         // A4(440Hz)
         EXPECT_EQ( wf->CalcWFromNoteNo( 69, 0 ), wf->CalcWFromFreq( 440.0 ) );
+
+        // A5(880Hz)
+        EXPECT_EQ( wf->CalcWFromNoteNo( 81, 0 ), wf->CalcWFromFreq( 880.0 ) );
     }
 }

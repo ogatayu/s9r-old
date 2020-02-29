@@ -53,6 +53,7 @@ private:
 
 public:
     Voice() {
+        voice_no_ = 0;
         nn_       = 0;
         velocity_ = 0;
         key_on_   = false;
@@ -121,7 +122,7 @@ public:
         current_voice_no_ = 0;
         unison_num_       = 1;
         poly_num_         = 16;  // 16 voices
-        for(int ix; ix<kVoiceNum; ix++) {
+        for(int ix=0; ix<kVoiceNum; ix++) {
             voice[ix] = new Voice;
         }
     }
@@ -156,12 +157,15 @@ private:
     float tuning_, fs_;
 
     // module method
-    VoiceCtrl voicectrl;
+    VoiceCtrl voicectrl_;
+    AudioCtrl* audioctrl_;
 
 public:
     static Synth* Create( float tuning );
     static void   Destroy();
     static Synth* GetInstance();
+
+    void Start();
 
     float SignalCallback();
 };
