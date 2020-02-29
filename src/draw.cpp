@@ -7,7 +7,7 @@
 #include "draw.h"
 
 #include "nanovg.h"
-#define NANOVG_GL3_IMPLEMENTATION
+#define NANOVG_GLES3_IMPLEMENTATION
 #include "nanovg_gl.h"
 
 /**
@@ -35,7 +35,7 @@ void Draw::Start()
     glfwMakeContextCurrent(glfw_window_);
     gl3wInit();
 
-    struct NVGcontext* vg = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
+    struct NVGcontext* vg = nvgCreateGLES3(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
     if(!vg) {
         glfwTerminate();
         return;
@@ -59,7 +59,7 @@ void Draw::Start()
         glfwPollEvents();
     }
 
-    nvgDeleteGL3(vg);
+    nvgDeleteGLES3(vg);
 
     glfwTerminate();
 }
