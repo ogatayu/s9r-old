@@ -8,6 +8,7 @@ set(LINKLIBS)
 set(BUILD_EXAMPLE_PROGRAMS OFF)
 set(BUILD_TESTS OFF)
 add_subdirectory(lib/libsoundio)
+include_directories(lib/libsoundio)
 link_directories(lib/libsoundio)
 list(APPEND LINKLIBS libsoundio_shared)
 
