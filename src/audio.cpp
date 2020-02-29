@@ -70,7 +70,8 @@ static void underflow_callback(struct SoundIoOutStream *outstream) {
 bool AudioCtrl::Initialize()
 {
     int err;
-    enum SoundIoBackend backend = SoundIoBackendDummy;  // SoundIoBackendNone;
+    enum SoundIoBackend backend = SoundIoBackendNone;
+    //backend = SoundIoBackendDummy;
 
     // init libsoundio
     soundio_ = soundio_create();
