@@ -71,7 +71,7 @@ bool AudioCtrl::Initialize()
 {
     int err;
     enum SoundIoBackend backend = SoundIoBackendNone;
-    //backend = SoundIoBackendDummy;
+    backend = SoundIoBackendDummy;
 
     // init libsoundio
     soundio_ = soundio_create();

@@ -61,7 +61,7 @@ namespace{
         uint32_t w = wf->CalcWFromFreq( 440.0 );
         for( int ix=0; ix<256; ix++) {
             float val = wf->GetTriangle( 440.0, p );
-            printf("%f,", ix, val);
+            printf("%f,", val);
             p += w;
         }
         printf("\n");
@@ -73,7 +73,7 @@ namespace{
         uint32_t w = wf->CalcWFromFreq( 440.0 );
         for( int ix=0; ix<256; ix++) {
             float val = wf->GetSaw( 440.0, p );
-            printf("%f,", ix, val);
+            printf("%f,", val);
             p += w;
         }
         printf("\n");
@@ -85,7 +85,7 @@ namespace{
         uint32_t w = wf->CalcWFromFreq( 440.0 );
         for( int ix=0; ix<256; ix++) {
             float val = wf->GetSquare( 440.0, p );
-            printf("%f,", ix, val);
+            printf("%f,", val);
             p += w;
         }
         printf("\n");
