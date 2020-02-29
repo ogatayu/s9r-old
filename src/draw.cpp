@@ -53,6 +53,12 @@ void Draw::Start()
         nvgBeginFrame(vg, width, height, pixelRatio);
 
 
+        nvgBeginPath(vg);
+        nvgRect(vg, 10,10, 120,30);
+        nvgFillColor(vg, nvgRGBA(255,192,0,255));
+        nvgFill(vg);
+
+
         nvgEndFrame(vg);
 
         glfwSwapBuffers(glfw_window_);
