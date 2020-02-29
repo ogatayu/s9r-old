@@ -58,17 +58,25 @@ Synth* Synth::GetInstance()
  */
 void Synth::Initialize( float tuning )
 {
-    AudioCtrl* audioctrl = AudioCtrl::GetInstance();
+    audioctrl_ = AudioCtrl::GetInstance();
 
     // init param
     tuning_ = tuning;
-    fs_     = audioctrl->SampleRateGet();
+    fs_     = audioctrl_->SampleRateGet();
 
     // create wave form
     Waveform* wf = Waveform::Create( tuning_, fs_ );
 
     // set audio callback
-    audioctrl->SignalCallbackSet( synth_signal_callback, this );
+    audioctrl_->SignalCallbackSet( synth_signal_callback, this );
+}
+
+/**
+ * @brief Start synthesizer
+ */
+void Synth::Start()
+{
+    audioctrl_->Start();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -81,12 +89,12 @@ float Synth::SignalCallback()
     MidiCtrl* midictrl = MidiCtrl::GetInstance();
 
     if( midictrl->IsStatusChanged() ) {
-        voicectrl.Trigger();            // トリガー/リリース処理
+        voicectrl_.Trigger();            // トリガー/リリース処理
         midictrl->ResetStatusChange();  // 鍵盤状態変更フラグを落とす
     }
 
     // 各ボイスの信号処理を行いステレオMIXする（ボイスコントローラーの仕事）。
-    return voicectrl.SignalProcess();
+    return voicectrl_.SignalProcess();
 }
 
 /**

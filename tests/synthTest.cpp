@@ -25,6 +25,13 @@ namespace {
         }
     };
 
+    TEST_F(SynthTest, Create)
+    {
+        Synth* synth = Synth::Create( 440.0 );
+        EXPECT_NE( nullptr, synth );
+    }
+
+
     TEST_F(SynthTest, GetInstance)
     {
         Synth* synth = Synth::GetInstance();
