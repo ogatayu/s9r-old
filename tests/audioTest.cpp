@@ -8,24 +8,34 @@ namespace {
     protected:
         virtual void SetUp()
         {
-            AudioCtrl::Create();
+            audio_ = AudioCtrl::Create();
         }
 
         virtual void TearDown()
         {
             AudioCtrl::Destroy();
+            audio_ = nullptr;
         }
+
+    public:
+        AudioCtrl* audio_;
     };
 
-    TEST(AudioTest, Create)
+    TEST_F(AudioTest, Create)
     {
-        AudioCtrl* audio = AudioCtrl::Create();
-        EXPECT_NE( nullptr, audio );
+        audio_ = AudioCtrl::Create();
+        EXPECT_NE( nullptr, audio_ );
     }
 
     TEST_F(AudioTest, GetInstance)
     {
-        AudioCtrl* audio = AudioCtrl::GetInstance();
-        EXPECT_NE( nullptr, audio );
+        audio_ = AudioCtrl::GetInstance();
+        EXPECT_NE( nullptr, audio_ );
+    }
+
+    TEST_F(AudioTest, SampleRateGet)
+    {
+        audio_ = AudioCtrl::GetInstance();
+        EXPECT_LT( 0, audio_->SampleRateGet() );
     }
 }
