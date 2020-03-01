@@ -20,6 +20,7 @@ private:
     struct SoundIoOutStream *outstream_;
     struct SoundIoDevice    *device_;
 
+    static enum SoundIoBackend backend_;
 
 public:
     static AudioCtrl* Create();
@@ -28,7 +29,7 @@ public:
 
     void (*write_sample_)(char *ptr, double sample);
 
-    bool Start();
+    void Start();
     int  SampleRateGet();
 
     typedef double (*SignalCallbackFunc)( void* );
@@ -37,4 +38,6 @@ public:
     void SignalCallbackSet( SignalCallbackFunc func, void* userdata );
     void SignalCallbackUnset();
 
+    // test func
+    static void DummyMode();
 };

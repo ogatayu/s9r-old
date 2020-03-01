@@ -16,26 +16,29 @@ link_directories(lib/libsoundio)
 list(APPEND LINKLIBS libsoundio_shared)
 
 # add RtMidi
+include_directories(${PROJECT_SOURCE_DIR}/lib/rtmidi)
+link_directories(${PROJECT_SOURCE_DIR}/lib/rtmidi)
+add_library(rtmidi STATIC ${PROJECT_SOURCE_DIR}/lib/rtmidi/RtMidi.cpp)
+list(APPEND LINKLIBS rtmidi)
+
 if(UNIX AND NOT APPLE)
   add_definitions(-D__UNIX_JACK__)
   list(APPEND LINKLIBS jack pthread m)
 endif()
+
 if(WIN32)
   add_definitions(-D__WINDOWS_MM__)
   list(APPEND API_DEFS "-D__WINDOWS_MM__")
   list(APPEND LINKLIBS winmm)
 endif()
 
-include_directories(${PROJECT_SOURCE_DIR}/lib/rtmidi)
-link_directories(${PROJECT_SOURCE_DIR}/lib/rtmidi)
-add_library(rtmidi STATIC ${PROJECT_SOURCE_DIR}/lib/rtmidi/RtMidi.cpp)
-list(APPEND LINKLIBS rtmidi)
-
 # add gl3w
-execute_process(
-  COMMAND python ${PROJECT_SOURCE_DIR}/lib/gl3w/gl3w_gen.py
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/lib/gl3w
-  )
+if(NOT EXISTS ${PROJECT_SOURCE_DIR}/lib/gl3w/src/gl3w.c)
+  execute_process(
+    COMMAND python ${PROJECT_SOURCE_DIR}/lib/gl3w/gl3w_gen.py
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/lib/gl3w
+    )
+endif()
 #add_subdirectory(${PROJECT_SOURCE_DIR}/lib/gl3w)
 
 add_library(gl3w STATIC ${PROJECT_SOURCE_DIR}/lib/gl3w/src/gl3w.c)
@@ -82,6 +85,4 @@ add_executable(${PROJECT_NAME} ${MY_SRCS})
 target_link_libraries(${PROJECT_NAME} ${LINKLIBS})
 
 # add tests
-if(UNIX AND NOT APPLE)
-  add_subdirectory(tests)
-endif()
+add_subdirectory(tests)
