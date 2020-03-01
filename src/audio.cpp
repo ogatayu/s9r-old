@@ -21,6 +21,7 @@ static void write_callback(
     );
 
 AudioCtrl* AudioCtrl::instance_ = nullptr;
+enum SoundIoBackend AudioCtrl::backend_ = SoundIoBackendNone;
 
 
 /**
@@ -70,8 +71,6 @@ static void underflow_callback(struct SoundIoOutStream *outstream) {
 bool AudioCtrl::Initialize()
 {
     int err;
-    enum SoundIoBackend backend = SoundIoBackendNone;
-    //backend = SoundIoBackendDummy;
 
     // init libsoundio
     soundio_ = soundio_create();
@@ -80,8 +79,8 @@ bool AudioCtrl::Initialize()
         return false;
     }
 
-    err = (backend == SoundIoBackendNone) ?
-        soundio_connect(soundio_) : soundio_connect_backend(soundio_, backend);
+    err = (backend_ == SoundIoBackendNone) ?
+        soundio_connect(soundio_) : soundio_connect_backend(soundio_, backend_);
     if (err) {
         fprintf(stderr, "Unable to connect to backend: %s\n", soundio_strerror(err));
         return false;
@@ -154,20 +153,21 @@ bool AudioCtrl::Initialize()
 /**
  * @brief start
  */
-bool AudioCtrl::Start()
+void AudioCtrl::Start()
 {
     int err;
 
     fprintf(stderr, "outstream_->sample_rate: %d\n", outstream_->sample_rate);
     if ((err = soundio_outstream_start(outstream_))) {
         fprintf(stderr, "unable to start device: %s\n", soundio_strerror(err));
-        return false;
+        return;
     }
 #if 0
     for (;;) {
         soundio_wait_events(soundio_);
     }
 #endif
+    return;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -292,4 +292,10 @@ void AudioCtrl::SignalCallbackUnset()
 {
     signal_callback_func_     = nullptr;
     signal_callback_userdata_ = nullptr;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+void AudioCtrl::DummyMode() {
+    backend_ = SoundIoBackendDummy;
 }

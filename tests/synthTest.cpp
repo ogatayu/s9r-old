@@ -14,6 +14,7 @@ namespace {
         virtual void SetUp()
         {
             MidiCtrl::Create();
+            AudioCtrl::DummyMode();
             AudioCtrl::Create();
             Synth::Create( 440.0 );
             Draw::Create();
