@@ -12,10 +12,6 @@
 
 int main(int argc, char *argv[])
 {
-    Draw draw;
-    draw.Start();
-    return 0;
-
     // initialize
     AudioCtrl* audioctrl = AudioCtrl::Create();
     if(!audioctrl) {
