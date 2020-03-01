@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 project(s9r)
+enable_testing()
 
 # Init variables
 set(LINKLIBS)
@@ -12,12 +13,6 @@ include_directories(lib/libsoundio)
 link_directories(lib/libsoundio)
 list(APPEND LINKLIBS libsoundio_shared)
 
-# for Linux
-if(UNIX AND NOT APPLE)
-  add_definitions(-D__UNIX_JACK__)
-  list(APPEND LINKLIBS jack pthread m)
-endif()
-
 # add RtMidi
 include_directories(${PROJECT_SOURCE_DIR}/lib/rtmidi)
 link_directories(${PROJECT_SOURCE_DIR}/lib/rtmidi)
@@ -25,15 +20,20 @@ add_library(rtmidi STATIC ${PROJECT_SOURCE_DIR}/lib/rtmidi/RtMidi.cpp)
 list(APPEND LINKLIBS rtmidi)
 
 # add gl3w
-execute_process(COMMAND python3 ${PROJECT_SOURCE_DIR}/lib/gl3w/gl3w_gen.py)
+execute_process(
+  COMMAND python ${PROJECT_SOURCE_DIR}/lib/gl3w/gl3w_gen.py
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/lib/gl3w
+  )
 #add_subdirectory(${PROJECT_SOURCE_DIR}/lib/gl3w)
 
 add_library(gl3w STATIC ${PROJECT_SOURCE_DIR}/lib/gl3w/src/gl3w.c)
-target_link_libraries(gl3w dl)
+if(UNIX AND NOT APPLE)
+  target_link_libraries(gl3w dl)
+endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/lib/gl3w/include)
 link_directories(${PROJECT_SOURCE_DIR}/lib/gl3w)
-list(APPEND LINKLIBS dl gl3w)  # gl3w requires dl
+list(APPEND LINKLIBS gl3w)  # gl3w requires dl
 
 # add GLFW
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL " " FORCE)
@@ -57,12 +57,20 @@ include_directories(${PROJECT_SOURCE_DIR}/lib/nanovg/src)
 add_library(nanovg STATIC ${PROJECT_SOURCE_DIR}/lib//nanovg/src/nanovg.c)
 list(APPEND LINKLIBS nanovg)
 
-enable_testing()
+# for Linux
+if(UNIX AND NOT APPLE)
+  add_definitions(-D__UNIX_JACK__)
+  list(APPEND LINKLIBS jack pthread m)
+endif()
 
 # s9r
+
 # set MY_SRCS(it is testing target)
 file(GLOB MY_SRCS ${PROJECT_SOURCE_DIR}/src/*.cpp)
 add_executable(${PROJECT_NAME} ${MY_SRCS})
 target_link_libraries(${PROJECT_NAME} ${LINKLIBS})
 
-add_subdirectory(tests)
+# add tests
+if(UNIX AND NOT APPLE)
+  add_subdirectory(tests)
+endif()
