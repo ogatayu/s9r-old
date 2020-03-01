@@ -136,6 +136,7 @@ void  Draw::WaveformPut( float wavedata_ )
 
 void Draw::WaveformGet( float* buf, int num )
 {
-    memcpy( buf, waveform_->buffer_, sizeof(float) * num );
+    waveform_->SnoopFromTail(buf, num);
+    //memcpy( buf, waveform_->buffer_, sizeof(float) * num );
     return;
 }
