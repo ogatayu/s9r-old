@@ -68,7 +68,12 @@ void Draw::Start()
         fprintf(stderr,"glfwInit fail\n");
         return;
     }
+
+#ifdef NDEBUG
     GLFWwindow* glfw_window_ = glfwCreateWindow( kWidth, kHeight, "s9r", glfwGetPrimaryMonitor(), NULL );
+#else
+    GLFWwindow* glfw_window_ = glfwCreateWindow( kWidth, kHeight, "s9r", NULL, NULL );
+#endif
 
     if (!glfw_window_) {
         glfwTerminate();
