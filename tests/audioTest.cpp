@@ -8,6 +8,7 @@ namespace {
     protected:
         virtual void SetUp()
         {
+            AudioCtrl::DummyMode();
             audio_ = AudioCtrl::Create();
         }
 
