@@ -35,7 +35,7 @@ endif()
 # add gl3w
 if(NOT EXISTS ${PROJECT_SOURCE_DIR}/lib/gl3w/src/gl3w.c)
   execute_process(
-    COMMAND python ${PROJECT_SOURCE_DIR}/lib/gl3w/gl3w_gen.py
+    COMMAND python3 ${PROJECT_SOURCE_DIR}/lib/gl3w/gl3w_gen.py
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/lib/gl3w
     )
 endif()
