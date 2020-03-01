@@ -20,6 +20,8 @@ private:
     Draw& operator=(const Draw&);
     static Draw* instance_;
 
+    static const int kWidth  = 480;
+    static const int kHeight = 320;
     static const int kSampleNum = 256;
 
     FIFO* waveform_;
