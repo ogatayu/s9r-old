@@ -4,11 +4,11 @@
 #include <iostream>
 #include <cstdlib>
 #include <string.h>
-#include <unistd.h>
 #include <math.h>
 
 #include <soundio/soundio.h>
 #include "audio.h"
+
 
 static void write_sample_s16ne(char *ptr, double sample);
 static void write_sample_s32ne(char *ptr, double sample);
@@ -146,7 +146,7 @@ bool AudioCtrl::Initialize()
         fprintf(stderr, "unable to set channel layout: %s\n", soundio_strerror(outstream_->layout_error));
     }
 
-    fprintf(stderr, "Software latency: %f\n", outstream_->software_latency);
+    fprintf(stderr, "Software latency: %f sec\n", outstream_->software_latency);
 
     return true;
 }
@@ -163,10 +163,11 @@ bool AudioCtrl::Start()
         fprintf(stderr, "unable to start device: %s\n", soundio_strerror(err));
         return false;
     }
-
+#if 0
     for (;;) {
         soundio_wait_events(soundio_);
     }
+#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////

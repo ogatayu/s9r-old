@@ -8,7 +8,7 @@ Building
 
 ```shell
 # install requirements
-sudo apt install cmake libasound2-dev libjack-jackd2-dev
+sudo apt install cmake libx11-dev libasound2-dev libjack-jackd2-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
 
 # build s9r
 git clone https://github.com/y3o4xx/s9r.git
