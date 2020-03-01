@@ -59,12 +59,13 @@ void FIFO::Put( void *data )
 #if 0
     /* 引数チェック */
     if( data == NULL ) {
-        return (-1);
-    }
-    if( length_ >= capacity_ ) {
-        return (-1);
+        return;
     }
 #endif
+
+    if( length_ >= capacity_ ) {
+        return;
+    }
 
     /* FIFOへデータ格納 */
     memcpy( (unsigned char *)buffer_ + (tail_ * blockSize_), data, blockSize_ );
@@ -83,17 +84,17 @@ void FIFO::Put( void *data )
  * @retval  0 成功
  * @retval -1 失敗
  */
-int FIFO::Get( void *data )
+void FIFO::Get( void *data )
 {
 #if 0
     /* 引数チェック */
     if( data == NULL ) {
-        return (-1);
-    }
-    if( length_ <= 0 ) {
-        return (-1);
+        return;
     }
 #endif
+    if( length_ <= 0 ) {
+        return;
+    }
 
     /* FIFOからデータ取得 */
     memcpy( data, (unsigned char *)buffer_ + (head_ * blockSize_), blockSize_ );
@@ -102,7 +103,7 @@ int FIFO::Get( void *data )
     head_ = (head_ + 1) % capacity_;
     length_--;
 
-    return 0;
+    return;
 }
 
 /**
