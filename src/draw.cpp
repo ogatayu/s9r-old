@@ -68,7 +68,7 @@ void Draw::Start()
         fprintf(stderr,"glfwInit fail\n");
         return;
     }
-    GLFWwindow* glfw_window_ = glfwCreateWindow( 320, 240, "s9r", NULL, NULL );
+    GLFWwindow* glfw_window_ = glfwCreateWindow( kWidth, kHeight, "s9r", glfwGetPrimaryMonitor(), NULL );
 
     if (!glfw_window_) {
         glfwTerminate();
@@ -87,27 +87,25 @@ void Draw::Start()
 
     glfwSwapInterval(1);
 
-    float width = 320, height = 240;
-    float phase = 0;
     while (!glfwWindowShouldClose(glfw_window_)) {
         WaveformGet(wavedata_, kSampleNum);
 
         glClearColor(0.1f, 0.1f, 0.2f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        nvgBeginFrame(vg_, width, height, 1.0);
+        nvgBeginFrame(vg_, kWidth, kHeight, 1.0);
         {
             nvgBeginPath(vg_);
             {
-                nvgMoveTo(vg_, 0, wavedata_[0] + 120);
+                nvgMoveTo( vg_, -1.0f, (wavedata_[0]*100.0f) + (kHeight/2) );
 
-                float w = width / kSampleNum;
+                float w = (float)kWidth / (kSampleNum+1);
                 for(int ix=0; ix<kSampleNum; ix++) {
-                    nvgLineTo( vg_, (float)ix * w, (wavedata_[ix]*100.0f) + 120 );
+                    nvgLineTo( vg_, (float)ix * w, (wavedata_[ix]*100.0f) + (kHeight/2) );
                 }
 
                 nvgStrokeColor(vg_, nvgRGBA(255,255,255,200));
-                nvgStrokeWidth(vg_, 1.0f);
+                nvgStrokeWidth(vg_, 2.0f);
                 nvgLineJoin(vg_, NVG_ROUND);
                 nvgLineCap(vg_, NVG_ROUND);
                 nvgStroke(vg_);

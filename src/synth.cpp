@@ -476,5 +476,5 @@ float Voice::VCF::Calc( float val )
  */
 float Voice::VCA::Calc( float val )
 {
-    return val * 0.1f;
+    return val * 0.25f;
 }
