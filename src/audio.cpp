@@ -70,7 +70,7 @@ bool AudioCtrl::Initialize()
 {
     int err;
     enum SoundIoBackend backend = SoundIoBackendNone;
-    backend = SoundIoBackendDummy;
+    //backend = SoundIoBackendDummy;
 
     // init libsoundio
     soundio_ = soundio_create();
@@ -145,7 +145,7 @@ bool AudioCtrl::Initialize()
         fprintf(stderr, "unable to set channel layout: %s\n", soundio_strerror(outstream_->layout_error));
     }
 
-    fprintf(stderr, "Software latency: %f\n", outstream_->software_latency);
+    fprintf(stderr, "Software latency: %f sec\n", outstream_->software_latency);
 
     return true;
 }

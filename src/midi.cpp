@@ -56,6 +56,15 @@ bool MidiCtrl::Initialize()
     try {
         midiin = new RtMidiIn();
 
+        // Check inputs.
+        unsigned int nPorts = midiin->getPortCount();
+        std::cout << "\nThere are " << nPorts << " MIDI input sources available.\n";
+
+        for ( unsigned i=0; i<nPorts; i++ ) {
+        std::string portName = midiin->getPortName(i);
+        std::cout << "  Input Port #" << i << ": " << portName << '\n';
+        }
+
         if ( midi_choose_port( midiin ) == false ) {
             goto cleanup;
         }
@@ -101,7 +110,7 @@ void MidiCtrl::InputCallback( double deltatime, std::vector< unsigned char > *me
             break;
     }
 
-#if 0
+#if 1
     for ( unsigned int ix=0; ix<bytes; ix++ ) {
         std::cout << "Byte " << ix << " = " << (int)message->at(ix) << ", ";
     }

@@ -14,10 +14,21 @@ link_directories(lib/libsoundio)
 list(APPEND LINKLIBS libsoundio_shared)
 
 # add RtMidi
+if(UNIX AND NOT APPLE)
+  add_definitions(-D__UNIX_JACK__)
+  list(APPEND LINKLIBS jack pthread m)
+endif()
+if(WIN32)
+  add_definitions(-D__WINDOWS_MM__)
+  list(APPEND API_DEFS "-D__WINDOWS_MM__")
+  list(APPEND LINKLIBS winmm)
+endif()
+
 include_directories(${PROJECT_SOURCE_DIR}/lib/rtmidi)
 link_directories(${PROJECT_SOURCE_DIR}/lib/rtmidi)
 add_library(rtmidi STATIC ${PROJECT_SOURCE_DIR}/lib/rtmidi/RtMidi.cpp)
 list(APPEND LINKLIBS rtmidi)
+
 
 # add gl3w
 execute_process(
@@ -59,7 +70,6 @@ list(APPEND LINKLIBS nanovg)
 
 # for Linux
 if(UNIX AND NOT APPLE)
-  add_definitions(-D__UNIX_JACK__)
   list(APPEND LINKLIBS jack pthread m)
 endif()
 
