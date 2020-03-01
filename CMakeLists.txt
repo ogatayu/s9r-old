@@ -77,8 +77,13 @@ if(UNIX AND NOT APPLE)
   list(APPEND LINKLIBS jack pthread m)
 endif()
 
-# s9r
+# add fmt
+add_subdirectory(${PROJECT_SOURCE_DIR}/lib/fmt)
+include_directories(${PROJECT_SOURCE_DIR}/lib/fmt)
+link_directories(${PROJECT_SOURCE_DIR}/lib/fmt)
+list(APPEND LINKLIBS fmt)
 
+# s9r
 # set MY_SRCS(it is testing target)
 file(GLOB MY_SRCS ${PROJECT_SOURCE_DIR}/src/*.cpp)
 add_executable(${PROJECT_NAME} ${MY_SRCS})

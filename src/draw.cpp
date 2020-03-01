@@ -3,10 +3,9 @@
  */
 #include <thread>
 #include <chrono>
-
 #include <stdio.h>
-#include <math.h>
-#include <stdlib.h> // for rand
+
+#include <fmt/format.h>
 
 #include <GL/gl3w.h>
 #include <GLFW/glfw3.h>
@@ -19,6 +18,7 @@
 #include "draw.h"
 
 Draw* Draw::instance_ = nullptr;
+
 
 /**
  * @brief Destroy
@@ -83,6 +83,9 @@ void Draw::Start()
     glfwMakeContextCurrent(glfw_window_);
     gl3wInit();
 
+    glfwSwapInterval(1);
+
+    // nanovg create
     struct NVGcontext* vg_ = nvgCreateGLES3(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
     if(!vg_) {
         glfwTerminate();
@@ -90,8 +93,17 @@ void Draw::Start()
         return;
     }
 
-    glfwSwapInterval(1);
+    // font init
+    int fnt = nvgCreateFont(vg_, "sans-bold", "Roboto-Bold.ttf");
+    if( fnt == -1) {
+        printf("Could not add font bold.\n");
+        return;
+    }
 
+    using clock = std::chrono::high_resolution_clock;
+    auto wait_time = std::chrono::nanoseconds(int(1e9f / 30.f));
+    float fps = 0;
+    auto base_time = clock::now();
     while (!glfwWindowShouldClose(glfw_window_)) {
         WaveformGet(wavedata_, kSampleNum);
 
@@ -102,9 +114,9 @@ void Draw::Start()
         {
             nvgBeginPath(vg_);
             {
-                nvgMoveTo( vg_, -1.0f, (wavedata_[0]*100.0f) + (kHeight/2) );
-
+                // waveform
                 float w = (float)kWidth / (kSampleNum+1);
+                nvgMoveTo( vg_, -1.0f * w, (wavedata_[0]*100.0f) + (kHeight/2) );
                 for(int ix=0; ix<kSampleNum; ix++) {
                     nvgLineTo( vg_, (float)ix * w, (wavedata_[ix]*100.0f) + (kHeight/2) );
                 }
@@ -114,6 +126,13 @@ void Draw::Start()
                 nvgLineJoin(vg_, NVG_ROUND);
                 nvgLineCap(vg_, NVG_ROUND);
                 nvgStroke(vg_);
+
+                // infomation
+                nvgFontSize(vg_, 15.0f);
+                nvgFontFace(vg_, "sans-bold");
+                nvgTextAlign(vg_, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
+                nvgFillColor(vg_, nvgRGBA(255,255,255,200));
+                nvgText(vg_, 10, 15, fmt::format("FPS: {:.2f}", fps).c_str(), NULL);
             }
         }
         nvgEndFrame(vg_);
@@ -122,7 +141,12 @@ void Draw::Start()
         glfwPollEvents();
 
         // fps control
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        auto last_time = clock::now() - base_time;
+        base_time = clock::now();
+        std::this_thread::sleep_for(wait_time-last_time);
+
+        auto nanosec = std::chrono::duration_cast< std::chrono::nanoseconds >( last_time ).count();
+        fps = 1e9f / nanosec;
     }
 
     nvgDeleteGLES3(instance_->vg_);
