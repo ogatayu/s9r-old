@@ -4,7 +4,6 @@
 #include <iostream>
 #include <cstdlib>
 #include <string.h>
-#include <unistd.h>
 #include <math.h>
 
 #include <soundio/soundio.h>
