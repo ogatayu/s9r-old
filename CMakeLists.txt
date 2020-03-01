@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.10)
 project(s9r)
 enable_testing()
 
+set(CMAKE_CXX_STANDARD, 11)
+
 # Init variables
 set(LINKLIBS)
 
@@ -28,7 +30,6 @@ include_directories(${PROJECT_SOURCE_DIR}/lib/rtmidi)
 link_directories(${PROJECT_SOURCE_DIR}/lib/rtmidi)
 add_library(rtmidi STATIC ${PROJECT_SOURCE_DIR}/lib/rtmidi/RtMidi.cpp)
 list(APPEND LINKLIBS rtmidi)
-
 
 # add gl3w
 execute_process(

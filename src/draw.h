@@ -3,17 +3,40 @@
  */
 #pragma once
 
-#include <GL/gl3w.h>
-#include <GLFW/glfw3.h>
+#include "fifo.h"
 
+struct GLFWwindow;
+struct NVGcontext;
+
+/**
+ * @class Draw
+ */
 class Draw {
 private:
-    GLFWwindow* glfw_window_;
-
-public:
     Draw(){}
     ~Draw(){}
 
+    Draw(const Draw&);
+    Draw& operator=(const Draw&);
+    static Draw* instance_;
+
+    static const int kSampleNum = 256;
+
+    FIFO* waveform_;
+    float wavedata_[kSampleNum] = { 0 };
+
+public:
+    static Draw* Create();
+    static void  Destroy();
+    static Draw* GetInstance();
+
+    // context info
+    GLFWwindow* glfw_window_;
+    NVGcontext* vg_;
+
     bool Initialize();
     void Start();
+
+    void WaveformPut( float data );
+    void WaveformGet( float* buf, int num );
 };

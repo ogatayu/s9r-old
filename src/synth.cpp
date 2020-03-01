@@ -12,6 +12,7 @@
 #include "midi.h"
 #include "synth.h"
 #include "waveform.h"
+#include "draw.h"
 
 
 static double synth_signal_callback( void* userdata );
@@ -94,7 +95,12 @@ float Synth::SignalCallback()
     }
 
     // 各ボイスの信号処理を行いステレオMIXする（ボイスコントローラーの仕事）。
-    return voicectrl_.SignalProcess();
+    float val = voicectrl_.SignalProcess();
+
+    Draw* draw = Draw::GetInstance();
+    draw->WaveformPut(val);
+
+    return val;
 }
 
 /**
@@ -470,5 +476,5 @@ float Voice::VCF::Calc( float val )
  */
 float Voice::VCA::Calc( float val )
 {
-    return val;
+    return val * 0.1f;
 }

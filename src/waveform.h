@@ -5,6 +5,9 @@
 
 #define WT_SIZE (1024) // 波形テーブルサイズ(単位はサンプル)
 
+/**
+ * @class Waveform
+ */
 class Waveform {
 private:
     Waveform(){}

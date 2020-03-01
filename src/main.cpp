@@ -28,10 +28,17 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    Draw* draw = Draw::Create();
+    if(!draw) {
+        return 1;
+    }
+
     // s9r start!!!
     synth->Start();
+    draw->Start();
 
     // end
+    Draw::Destroy();
     AudioCtrl::Destroy();
     MidiCtrl::Destroy();
     Synth::Destroy();
