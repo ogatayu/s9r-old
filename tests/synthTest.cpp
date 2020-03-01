@@ -5,6 +5,7 @@
 #include "midi.h"
 #include "audio.h"
 #include "synth.h"
+#include "draw.h"
 
 namespace {
     class SynthTest : public ::testing::Test
@@ -15,10 +16,12 @@ namespace {
             MidiCtrl::Create();
             AudioCtrl::Create();
             Synth::Create( 440.0 );
+            Draw::Create();
         }
 
         virtual void TearDown()
         {
+            Draw::Destroy();
             Synth::Destroy();
             AudioCtrl::Destroy();
             MidiCtrl::Destroy();
