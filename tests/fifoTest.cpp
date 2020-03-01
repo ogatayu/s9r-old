@@ -69,12 +69,12 @@ namespace {
         EXPECT_EQ( get_data, -1 );
 
 
-        // 2周(最初の1周分しか取れない)
+        // 2周(後半の1周分しか取れない)
         for(int ix=0; ix<cycle_num*2; ix++) {
             put_data = ix;
             fifo->Put( &put_data );
         }
-        for(int ix=0; ix<cycle_num; ix++) {
+        for(int ix=8; ix<cycle_num*2; ix++) {
             get_data = 0;
             fifo->Get( &get_data );
             EXPECT_EQ( ix, get_data );

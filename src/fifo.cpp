@@ -61,18 +61,18 @@ void FIFO::Put( void *data )
     if( data == NULL ) {
         return;
     }
-#endif
 
     if( length_ >= capacity_ ) {
         return;
     }
+#endif
 
     /* FIFOへデータ格納 */
     memcpy( (unsigned char *)buffer_ + (tail_ * blockSize_), data, blockSize_ );
 
     /* FIFO情報更新 */
     tail_ = (tail_+1) & (capacity_-1);
-    length_++;
+    length_ = (length_ == capacity_) ? length_ : length_+1;
 
     return;
 }
