@@ -20,6 +20,8 @@ private:
     Draw& operator=(const Draw&);
     static Draw* instance_;
 
+    bool Initialize();
+
     static const int kWidth  = 480;
     static const int kHeight = 320;
     static const int kSampleNum = 256;
@@ -36,7 +38,6 @@ public:
     GLFWwindow* glfw_window_;
     NVGcontext* vg_;
 
-    bool Initialize();
     void Start();
 
     void WaveformPut( float data );

@@ -11,7 +11,7 @@ namespace{
     protected:
         virtual void SetUp()
         {
-            Waveform::Create( 440.0, 44100.0 );
+            Waveform::Create( 440.f, 48000.f );
         }
 
         virtual void TearDown()

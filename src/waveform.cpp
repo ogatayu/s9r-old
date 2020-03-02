@@ -9,9 +9,9 @@
 #include <cstdint>
 #include <math.h>
 
+#include "common.h"
 #include "waveform.h"
 
-#define PI (3.141592653589793238462643383279f)
 #define _SIN(a) (wt_sine_[(a) % WT_SIZE])   // sin()関数の代わりにテーブルを使い、テーブル生成を高速化
 
 Waveform* Waveform::instance_ = nullptr;
