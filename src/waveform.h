@@ -43,6 +43,7 @@ private:
     void GenTblSaw(float* p_buf, int harmo_num);
     void GenTblSquare(float* p_buf, int harmo_num);
 
+    float* GetWTFromNN( int wf, float nn );
     float* GetWTFromFreq( int wf, float freq );
 
 public:
@@ -61,7 +62,7 @@ public:
 
     // 位相は16:16の固定小数で扱う
     const float GetSine( int fixed_phase );
-    const float GetTriangle( float freq, int fixed_phase );
-    const float GetSaw( float freq, int fixed_phase );
-    const float GetSquare( float freq, int fixed_phase );
+    const float GetTriangle( float nn, int fixed_phase );
+    const float GetSaw( float nn, int fixed_phase );
+    const float GetSquare( float nn, int fixed_phase );
 };

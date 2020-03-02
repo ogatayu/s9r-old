@@ -13,7 +13,9 @@ private:
     class VCO {
     public:
         VCO() {
-            p_ = 0;
+            p_  = 0;
+            nn_ = 0;
+            detune_cent_ = 0;
         }
         ~VCO(){}
 
@@ -24,9 +26,10 @@ private:
         float    porta_start_nn_;      // ポルタメント開始時のnoteNo
         float    current_porta_time_;      // ポルタメント経過時間（1で正規化、0～1でポルタメント中）
         float    porta_time_delta_;    // ポルタメント速度
+        float    detune_cent_;      // ボイス間デチューン値（単位はセント）
 
         void  SetNoteNo( int nn, bool is_key_on );
-        float Calc( uint32_t w );
+        float Calc();
     };
 
     class VCF {
@@ -81,7 +84,7 @@ public:
     int  GetNo(void) { return voice_no_; };  // ボイス番号を返す
     void SetNo(int no) { voice_no_ = no; };  // ボイス番号を返す
 
-    float Calc( uint32_t w );
+    float Calc();
     bool  IsPlaying();
     bool  IsKeyOn(void);
 };

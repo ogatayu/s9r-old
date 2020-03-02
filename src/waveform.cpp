@@ -91,6 +91,27 @@ void Waveform::Initialize( float tuning, float fs )
 }
 
 /**
+ * @brief NoteNumberから最適な（＝倍音がナイキストを超えない）波形テーブルを求める
+ * @param wf  波形の種類
+ * @param nn  Note number
+ */
+float* Waveform::GetWTFromNN( int wf, float nn )
+{
+    if(wf==WF_SINE){
+        return &wt_sine_[0];
+    }
+    else{
+        float* p_tbl = (wf==WF_TRI) ? &wt_triangle_[0] : ((wf==WF_SAW) ? &wt_saw_[0] : &wt_square_[0]);
+        for( int ix=0; ix < wt_info_num_; ix++ ) {
+            if( nn <= wt_info_[ix].noteNo ) {
+                return p_tbl + (WT_SIZE * ix);
+            }
+        }
+    }
+    return &wt_sine_[0];
+}
+
+/**
  * @brief 周波数から最適な（＝倍音がナイキストを超えない）波形テーブルを求める
  * @param wf   波形の種類
  * @param freq 周波数
@@ -103,7 +124,7 @@ float* Waveform::GetWTFromFreq( int wf, float freq )
     else {
         float* p_tbl = (wf==WF_TRI) ? &wt_triangle_[0] : ((wf==WF_SAW) ? &wt_saw_[0] : &wt_square_[0]);
         for( int ix=0; ix < wt_info_num_; ix++ ) {
-            if(freq <= wt_info_[ix].freq) {
+            if( freq <= wt_info_[ix].freq ) {
                 return p_tbl + (WT_SIZE * ix);
             }
         }
@@ -166,34 +187,34 @@ const float Waveform::GetSine( int fixed_phase )
 
 /**
  * @brief GetTriangle
- * @param freq        freq
+ * @param nn          nn
  * @param fixed_phase phase of 16:16 fixed-point number
  */
-const float Waveform::GetTriangle( float freq, int fixed_phase )
+const float Waveform::GetTriangle( float nn, int fixed_phase )
 {
-    float* p_tbl = GetWTFromFreq( WF_TRI, freq );
+    float* p_tbl = GetWTFromNN( WF_TRI, nn );
     return get_wave( p_tbl, fixed_phase );
 }
 
 /**
  * @brief GetSaw
- * @param freq        freq
+ * @param nn          nn
  * @param fixed_phase phase of 16:16 fixed-point number
  */
-const float Waveform::GetSaw( float freq, int fixed_phase )
+const float Waveform::GetSaw( float nn, int fixed_phase )
 {
-    float* p_tbl = GetWTFromFreq( WF_SAW, freq );
+    float* p_tbl = GetWTFromNN( WF_SAW, nn );
     return get_wave( p_tbl, fixed_phase );
 }
 
 /**
  * @brief GetSquare
- * @param freq        freq
+ * @param nn          nn
  * @param fixed_phase phase of 16:16 fixed-point number
  */
-const float Waveform::GetSquare( float freq, int fixed_phase )
+const float Waveform::GetSquare( float nn, int fixed_phase )
 {
-    float* p_tbl = GetWTFromFreq( WF_SQUARE, freq );
+    float* p_tbl = GetWTFromNN( WF_SQUARE, nn );
     return get_wave( p_tbl, fixed_phase );
 }
 

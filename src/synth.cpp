@@ -326,37 +326,11 @@ float VoiceCtrl::SignalProcess()
     for(int ix = 0; ix<kVoiceNum; ix++) {
         if( voice[ix]->IsPlaying() == true ) {
             Voice *v = voice[ix];
-            w    = wf->CalcWFromNoteNo( v->nn_, 0 );
-            val += v->Calc( w );
+            val += v->Calc();
         }
     }
 
     return val;
-
-#if 0
-    // ボイスの信号をモノラルバッファに出力し、ステレオMIXしていく。
-    CACHE_ALIGN16 SIGREAL monoSig[MAX_SIGBUF];
-    int processedVoiceNum = 0;
-    for(int i=0;i<m_voiceNum;i++){
-        // ボイス毎に信号処理を実行
-        if(!voice[i]->isBusy()) continue;    // 発音中でなければ、処理依頼しない
-        bool voiceProcessed=false;
-        voice[i]->processSignal(size,monoSig,&voiceProcessed);    // 信号処理
-        if(!voiceProcessed) continue;            // 信号処理されていないので、何もしない
-
-        // mono出力をステレオMIX
-        // 初めてのMIX処理なら、まず出力バッファを無音にする
-        if(processedVoiceNum == 0) for(int j=0;j<size;j++) pSig[j].l = pSig[j].r = 0;
-        float pan = voice[i]->getPan();
-        float lGain = (pan<0.5f) ? 1.f : (1.f-pan)*2.f;
-        float rGain = (pan>0.5f) ? 1.f : pan*2.f;
-        for(int j=0;j<size;j++){
-            pSig[j].l += monoSig[j]*lGain;
-            pSig[j].r += monoSig[j]*rGain;
-        }
-        processedVoiceNum++;
-    }
-#endif
 }
 
 
@@ -365,10 +339,10 @@ float VoiceCtrl::SignalProcess()
 /**
  * @brief 信号処理部
  */
-float Voice::Calc( uint32_t w )
+float Voice::Calc()
 {
     float val;
-    val = vco.Calc(w);
+    val = vco.Calc();
     val = vcf.Calc(val);
     val = vca.Calc(val);
     return val;
@@ -424,6 +398,7 @@ void Voice::VCO::SetNoteNo( int nn, bool is_key_on )
     // ポルタメント関連の変数処理
     if(current_porta_time_ < 1.f) porta_start_nn_ = current_nn_;  // ポルタメント中→開始NoteNoはポルタメント中のNoteNo
     else                          porta_start_nn_ = nn_;          // 定常状態→開始NoteNoは今までのノートNo
+
     // ポルタメントが必要かどうかを判定
     // NordLead2やSynth1の"Auto"なポルタメント動作とする。
     // これを止め、常にポルタメントするようにするには、開始条件からisKeyOnを削除する。
@@ -447,10 +422,14 @@ void Voice::VCO::SetNoteNo( int nn, bool is_key_on )
  *
  * @param[in] w 角速度
  */
-float Voice::VCO::Calc( uint32_t w )
+float Voice::VCO::Calc()
 {
     Waveform* wf = Waveform::GetInstance();
-    float val = wf->GetSine( p_ );
+    uint32_t w = wf->CalcWFromNoteNo( nn_, detune_cent_ );
+
+    //float val = wf->GetSine( p_ );
+    float val = wf->GetSaw( nn_, p_ );
+
     p_ += w;
     return val;
 }
