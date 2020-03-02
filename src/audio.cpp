@@ -220,7 +220,11 @@ static void write_callback(struct SoundIoOutStream *outstream, int frame_count_m
     struct SoundIoChannelArea *areas;
     int err;
 
+#ifdef __WINDOWS_MM__
+    int frames_left = outstream->sample_rate / 10;
+#else
     int frames_left = frame_count_max;
+#endif
 
     while (frames_left > 0) {
         int frame_count = frames_left;
