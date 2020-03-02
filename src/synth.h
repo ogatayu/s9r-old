@@ -5,6 +5,9 @@
 
 #include <list>
 
+#include "filter.h"
+
+
 /**
  * @class Voice
  */
@@ -33,8 +36,10 @@ private:
     };
 
     class VCF {
+    private:
+        Filter* filter;
     public:
-        VCF(){}
+        VCF();
         ~VCF(){}
         float Calc( float val );
     };
@@ -169,6 +174,8 @@ public:
     static Synth* GetInstance();
 
     void Start();
+    float GetSamplerate() { return fs_; }
 
     float SignalCallback();
+
 };

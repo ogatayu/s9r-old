@@ -7,11 +7,13 @@
 #include <math.h>
 
 #include "common.h"
+#include "waveform.h"
+#include "filter.h"
 
 #include "audio.h"
 #include "midi.h"
 #include "synth.h"
-#include "waveform.h"
+
 #include "draw.h"
 
 
@@ -437,12 +439,24 @@ float Voice::VCO::Calc()
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
+ * @brief constructor
+ */
+Voice::VCF::VCF()
+{
+    Synth* s = Synth::GetInstance();
+    filter = new Filter( 48000.f );
+
+    filter->LowPass( 1000.f, 0.7f);
+}
+
+/**
  * @brief 減算処理
  *
  * @param[in] val
  */
 float Voice::VCF::Calc( float val )
 {
+    return filter->Process(val);
     return val;
 }
 
