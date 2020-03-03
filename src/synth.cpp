@@ -9,6 +9,7 @@
 #include "common.h"
 #include "waveform.h"
 #include "filter.h"
+#include "envelope.h"
 
 #include "audio.h"
 #include "midi.h"
@@ -29,7 +30,7 @@ Synth* Synth::Create( float tuning )
 {
     if (!instance_)
     {
-        instance_ = new Synth;
+        instance_ = new Synth();
         instance_->Initialize( tuning );
     }
     return instance_;
@@ -43,6 +44,8 @@ void Synth::Destroy()
 {
     AudioCtrl* audioctrl = AudioCtrl::GetInstance();
     audioctrl->SignalCallbackUnset();
+
+    delete instance_->voicectrl_;
 
     delete instance_;
     instance_ = nullptr;
@@ -70,6 +73,9 @@ void Synth::Initialize( float tuning )
     // create wave form
     Waveform* wf = Waveform::Create( tuning_, fs_ );
 
+    // create Voice controller
+    voicectrl_ = new VoiceCtrl();
+
     // set audio callback
     audioctrl_->SignalCallbackSet( synth_signal_callback, this );
 }
@@ -92,12 +98,12 @@ float Synth::SignalCallback()
     MidiCtrl* midictrl = MidiCtrl::GetInstance();
 
     if( midictrl->IsStatusChanged() ) {
-        voicectrl_.Trigger();            // トリガー/リリース処理
+        voicectrl_->Trigger();            // トリガー/リリース処理
         midictrl->ResetStatusChange();  // 鍵盤状態変更フラグを落とす
     }
 
     // 各ボイスの信号処理を行いステレオMIXする（ボイスコントローラーの仕事）。
-    float val = voicectrl_.SignalProcess();
+    float val = voicectrl_->SignalProcess();
 
     Draw* draw = Draw::GetInstance();
     draw->WaveformPut(val);
@@ -116,6 +122,7 @@ static double synth_signal_callback( void* userdata )
 
 ///////////////////////////////////////////////////////////////////////////////
 
+#if 0
 /**
  * @brief NoteOn
  */
@@ -150,6 +157,7 @@ void VoiceCtrl::NoteOff( int notenum )
 
     return;
 }
+#endif
 
 /**
  * @brief GetNextOffVoice
@@ -254,8 +262,8 @@ void VoiceCtrl::TriggerMono()
     MidiCtrl* midictrl = MidiCtrl::GetInstance();
 
     // なにもキーがおさえられていなければ、現在のオンボイスをリリースして終わり
-    if(midictrl->GetOnKeyNum()==0){
-        for(int i=0;i < unison_num_; i++){
+    if(midictrl->GetOnKeyNum()==0) {
+        for(int i=0;i < unison_num_; i++) {
             on_voices_.remove(voice[i]);
             if(voice[i]->IsKeyOn()) voice[i]->Release();
         }
@@ -363,12 +371,14 @@ bool Voice::IsPlaying()
 // トリガー通知
 void Voice::Trigger(void)
 {
+    vca.Trigger();
     key_on_ = true;
 }
 
 // キーオフ通知
 void Voice::Release(void)
 {
+    vca.Release();
     key_on_ = false;
 }
 
@@ -444,9 +454,9 @@ float Voice::VCO::Calc()
 Voice::VCF::VCF()
 {
     Synth* s = Synth::GetInstance();
-    filter = new Filter( 48000.f );
+    filter = new Filter( s->GetSamplerate() );
 
-    filter->LowPass( 1000.f, 0.7f);
+    filter->LowPass( 1000.f, 0.7f );
 }
 
 /**
@@ -456,11 +466,43 @@ Voice::VCF::VCF()
  */
 float Voice::VCF::Calc( float val )
 {
-    return filter->Process(val);
+    //return filter->Process(val);
     return val;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+
+/**
+ * @brief constructor
+ */
+Voice::VCA::VCA()
+{
+    Synth* s = Synth::GetInstance();
+    env = new Envelope( s->GetSamplerate() );
+
+    env->SetAttack( 100 );
+    env->SetDecay( 500 );
+    env->SetSustain( 0.5f);
+}
+
+/**
+ * @brief 音量加工
+ *
+ */
+void Voice::VCA::Trigger()
+{
+    env->Trigger();
+}
+
+/**
+ * @brief 音量加工
+ *
+ */
+void Voice::VCA::Release()
+{
+    env->Release();
+}
+
 
 /**
  * @brief 音量加工
@@ -469,5 +511,5 @@ float Voice::VCF::Calc( float val )
  */
 float Voice::VCA::Calc( float val )
 {
-    return val * 0.25f;
+    return env->Process( val ) * 0.5f;
 }

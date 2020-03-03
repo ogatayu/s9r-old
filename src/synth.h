@@ -6,6 +6,7 @@
 #include <list>
 
 #include "filter.h"
+#include "envelope.h"
 
 
 /**
@@ -45,9 +46,13 @@ private:
     };
 
     class VCA {
+    private:
+        Envelope* env;
     public:
-        VCA(){}
+        VCA();
         ~VCA(){}
+        void  Trigger();
+        void  Release();
         float Calc( float val );
     };
 
@@ -131,7 +136,7 @@ public:
         unison_num_       = 1;
         poly_num_         = 16;  // 16 voices
         for(int ix=0; ix<kVoiceNum; ix++) {
-            voice[ix] = new Voice;
+            voice[ix] = new Voice();
         }
     }
     ~VoiceCtrl(){}
@@ -164,8 +169,7 @@ private:
     // param
     float tuning_, fs_;
 
-    // module method
-    VoiceCtrl voicectrl_;
+    VoiceCtrl* voicectrl_;
     AudioCtrl* audioctrl_;
 
 public:
