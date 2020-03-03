@@ -22,7 +22,7 @@ MidiCtrl* MidiCtrl::Create()
 {
     if (!instance_)
     {
-        instance_ = new MidiCtrl;
+        instance_ = new MidiCtrl();
         instance_->Initialize();
     }
     return instance_;

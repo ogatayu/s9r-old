@@ -27,7 +27,7 @@ Draw* Draw::Create()
 {
     if (!instance_)
     {
-        instance_ = new Draw;
+        instance_ = new Draw();
         instance_->Initialize();
     }
     return instance_;
@@ -115,7 +115,7 @@ void Draw::Start()
             nvgBeginPath(vg_);
             {
                 // waveform
-                float w = (float)kWidth / (kSampleNum+1);
+                float w = (float)kWidth / (kSampleNum-1);
                 nvgMoveTo( vg_, -1.0f * w, (wavedata_[0]*100.0f) + (kHeight/2) );
                 for(int ix=0; ix<kSampleNum; ix++) {
                     nvgLineTo( vg_, (float)ix * w, (wavedata_[ix]*100.0f) + (kHeight/2) );

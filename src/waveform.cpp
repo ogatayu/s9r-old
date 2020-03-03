@@ -22,7 +22,7 @@ Waveform* Waveform::Create( float tuning, float fs )
 {
     if (!instance_)
     {
-        instance_ = new Waveform;
+        instance_ = new Waveform();
         instance_->Initialize( tuning, fs );
     }
     return instance_;

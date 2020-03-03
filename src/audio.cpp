@@ -30,7 +30,7 @@ enum SoundIoBackend AudioCtrl::backend_ = SoundIoBackendNone;
 AudioCtrl* AudioCtrl::Create()
 {
     if (!instance_) {
-        instance_ = new AudioCtrl;
+        instance_ = new AudioCtrl();
         if( !(instance_->Initialize()) ) {
             delete instance_;
             instance_ = nullptr;
