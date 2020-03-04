@@ -11,13 +11,22 @@ Envelope::Envelope( float fs )
 {
     fs_ = fs;
 
-    out_prev_ = 0.f;
+    out_lv_prev_ = 0.f;
 
     attack_ms_  = 0;
     decay_ms_   = 0;
     sustain_lv_ = 1.f;
     release_ms_ = 0;
 
+    count_ = 0.f;
+}
+
+/**
+ * @brief SetState
+ */
+void Envelope::SetState(enum EnvelopeState state)
+{
+    state_ = state;
     count_ = 0.f;
 }
 
@@ -29,57 +38,69 @@ float Envelope::Process( float in )
     count_++;
     float elapsed_ms = (count_ * 1000.0) / fs_;
 
-    float out;
+    float out_lv;
     switch (state_)
     {
     case kIdle:
-        out = in;
+        out_lv = 1.f;
         break;
 
     case kAttack:
         if( attack_ms_ != 0 ) {
-            out = in * (elapsed_ms / attack_ms_);
+            out_lv = elapsed_ms / attack_ms_;
         }
         else {
-            out = in;
+            out_lv = 1.f;
         }
+
+        // end attack
         if( elapsed_ms >= attack_ms_ ) {
-            state_ = kDecay;
-            count_ = 0.f;
+            SetState( kDecay );
         }
         break;
 
     case kDecay:
         if( decay_ms_ != 0 ) {
-            out = in * (1.f - (sustain_lv_ * (elapsed_ms / decay_ms_)));
+            out_lv = 1.f - (sustain_lv_ * (elapsed_ms / decay_ms_));
         }
         else {
-            out = in * sustain_lv_;
+            out_lv = sustain_lv_;
         }
+
+        // end decay
         if( elapsed_ms >= decay_ms_ ) {
-            state_ = kSustain;
-            count_ = 0.f;
+            SetState( kSustain );
         }
         break;
 
     case kSustain:
-        out = in * sustain_lv_;
+        out_lv = sustain_lv_;
         break;
 
     case kRelease:
-        out = out_prev_;
+        if( release_ms_ != 0 ) {
+            out_lv = (out_lv_prev_ - (elapsed_ms *(1000.0/fs_)));
+        }
+        else {
+            out_lv = 0;
+        }
+
+        // end release
+        if( elapsed_ms >= release_ms_ ) {
+            SetState( kIdle );
+        }
         break;
 
     default:
-        out = 0;
+        out_lv = 0;
         break;
     }
 
     // limiter
-    out = (out>1.f) ? 1.f : ((out<0.f) ? 0.f : out);
+    out_lv = (out_lv>1.f) ? 1.f : ((out_lv<0.f) ? 0.f : out_lv);
 
-    out_prev_ = out;
-    return out;
+    out_lv_prev_ = out_lv;
+    return in * out_lv;
 }
 
 /**
@@ -87,8 +108,7 @@ float Envelope::Process( float in )
  */
 void Envelope::Trigger()
 {
-    state_ = kAttack;
-    count_ = 0.f;
+    SetState( kAttack );
 }
 
 /**
@@ -96,7 +116,7 @@ void Envelope::Trigger()
  */
 void Envelope::Release()
 {
-    state_ = kRelease;
+    SetState( kRelease );
 }
 
 /**
@@ -128,5 +148,5 @@ void Envelope::SetSustain(float sustain_lv)
  */
 void Envelope::SetRelease(int release_ms)
 {
-    release_ms = release_ms_;
+    release_ms_ = release_ms;
 }

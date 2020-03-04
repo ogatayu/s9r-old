@@ -481,8 +481,9 @@ Voice::VCA::VCA()
     env = new Envelope( s->GetSamplerate() );
 
     env->SetAttack( 100 );
-    env->SetDecay( 500 );
-    env->SetSustain( 0.5f);
+    env->SetDecay( 200 );
+    env->SetSustain( 0.5f );
+    env->SetRelease( 500 );
 }
 
 /**

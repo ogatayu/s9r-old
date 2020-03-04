@@ -36,10 +36,12 @@ private:
     enum EnvelopeState state_;
     float count_;
 
-    float out_prev_;
+    float out_lv_prev_;
 
     int   attack_ms_;
     int   decay_ms_;
     float sustain_lv_;
     int   release_ms_;
+
+    void SetState(enum EnvelopeState state);
 };
