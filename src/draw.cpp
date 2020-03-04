@@ -94,7 +94,7 @@ void Draw::Start()
     }
 
     // font init
-    int fnt = nvgCreateFont(vg_, "sans-bold", "Roboto-Bold.ttf");
+    int fnt = nvgCreateFont(vg_, "sans-bold", "./fonts/Roboto-Bold.ttf");
     if( fnt == -1) {
         printf("Could not add font bold.\n");
         return;
