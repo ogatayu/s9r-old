@@ -5,6 +5,10 @@
 
 #include <list>
 
+#include "filter.h"
+#include "envelope.h"
+
+
 /**
  * @class Voice
  */
@@ -13,7 +17,9 @@ private:
     class VCO {
     public:
         VCO() {
-            p_ = 0;
+            p_  = 0;
+            nn_ = 0;
+            detune_cent_ = 0;
         }
         ~VCO(){}
 
@@ -24,23 +30,31 @@ private:
         float    porta_start_nn_;      // ポルタメント開始時のnoteNo
         float    current_porta_time_;      // ポルタメント経過時間（1で正規化、0～1でポルタメント中）
         float    porta_time_delta_;    // ポルタメント速度
+        float    detune_cent_;      // ボイス間デチューン値（単位はセント）
 
         void  SetNoteNo( int nn, bool is_key_on );
-        float Calc( uint32_t w );
+        float Calc();
     };
 
     class VCF {
+    private:
+        Filter* filter;
     public:
-        VCF(){}
+        VCF();
         ~VCF(){}
         float Calc( float val );
     };
 
     class VCA {
+    private:
+        Envelope* env;
     public:
-        VCA(){}
+        VCA();
         ~VCA(){}
+        void  Trigger();
+        void  Release();
         float Calc( float val );
+        bool  IsPlaying();
     };
 
     class EG {
@@ -81,7 +95,7 @@ public:
     int  GetNo(void) { return voice_no_; };  // ボイス番号を返す
     void SetNo(int no) { voice_no_ = no; };  // ボイス番号を返す
 
-    float Calc( uint32_t w );
+    float Calc();
     bool  IsPlaying();
     bool  IsKeyOn(void);
 };
@@ -96,7 +110,7 @@ private:
     void NoteOff( int notenum );
 
     // const
-    static const int kVoiceNum = 128;
+    static const int kVoiceNum = 32;
 
     // variable
     int key_mode_;
@@ -106,7 +120,7 @@ private:
 
     int mono_current_velocity_;  // モノモード時に使うワーク用ベロシテシティ値
 
-    Voice* voice[kVoiceNum];
+    Voice* voice_[kVoiceNum];
 
     std::list<Voice*> on_voices_; // キーオン中のボイスリスト
 
@@ -117,15 +131,7 @@ private:
     Voice* GetNextOffVoice();
 
 public:
-    VoiceCtrl() {
-        key_mode_         = kPoly;
-        current_voice_no_ = 0;
-        unison_num_       = 1;
-        poly_num_         = 16;  // 16 voices
-        for(int ix=0; ix<kVoiceNum; ix++) {
-            voice[ix] = new Voice;
-        }
-    }
+    VoiceCtrl();
     ~VoiceCtrl(){}
 
     enum {
@@ -156,8 +162,7 @@ private:
     // param
     float tuning_, fs_;
 
-    // module method
-    VoiceCtrl voicectrl_;
+    VoiceCtrl* voicectrl_;
     AudioCtrl* audioctrl_;
 
 public:
@@ -166,6 +171,8 @@ public:
     static Synth* GetInstance();
 
     void Start();
+    float GetSamplerate() { return fs_; }
 
     float SignalCallback();
+
 };

@@ -30,7 +30,7 @@ enum SoundIoBackend AudioCtrl::backend_ = SoundIoBackendNone;
 AudioCtrl* AudioCtrl::Create()
 {
     if (!instance_) {
-        instance_ = new AudioCtrl;
+        instance_ = new AudioCtrl();
         if( !(instance_->Initialize()) ) {
             delete instance_;
             instance_ = nullptr;
@@ -198,12 +198,6 @@ static void write_sample_float64ne(char *ptr, double sample) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-//#define AUDIO_SINE_TEST
-#if defined(AUDIO_SINE_TEST)
-static const double PI = 3.14159265358979323846264338328;
-static double seconds_offset = 0.0;
-#endif
-
 /**
  * @brief write_callback
  *
@@ -238,8 +232,6 @@ static void write_callback(struct SoundIoOutStream *outstream, int frame_count_m
         }
 
         const struct SoundIoChannelLayout *layout = &outstream->layout;
-
-#if !defined(AUDIO_SINE_TEST)
         for (int frame = 0; frame < frame_count; frame += 1) {
             double sample = audioctrl->signal_callback_func_(audioctrl->signal_callback_userdata_);
             for (int channel = 0; channel < layout->channel_count; channel += 1) {
@@ -247,19 +239,6 @@ static void write_callback(struct SoundIoOutStream *outstream, int frame_count_m
                 areas[channel].ptr += areas[channel].step;
             }
         }
-        //seconds_offset = fmod(seconds_offset + seconds_per_frame * frame_count, 1.0);
-#else
-        double pitch = 440.0;
-        double radians_per_second = pitch * 2.0 * PI;
-        for (int frame = 0; frame < frame_count; frame += 1) {
-            double sample = sin((seconds_offset + frame * seconds_per_frame) * radians_per_second);
-            for (int channel = 0; channel < layout->channel_count; channel += 1) {
-                audioctrl->write_sample_(areas[channel].ptr, sample);
-                areas[channel].ptr += areas[channel].step;
-            }
-        }
-        seconds_offset = fmod(seconds_offset + seconds_per_frame * frame_count, 1.0);
-#endif
 
         if ((err = soundio_outstream_end_write(outstream))) {
             if (err == SoundIoErrorUnderflow)

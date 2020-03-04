@@ -11,7 +11,7 @@ namespace{
     protected:
         virtual void SetUp()
         {
-            Waveform::Create( 440.0, 44100.0 );
+            Waveform::Create( 440.f, 48000.f );
         }
 
         virtual void TearDown()
@@ -58,9 +58,9 @@ namespace{
     TEST_F(WaveformTest, GetTriangle){
         Waveform* wf = Waveform::GetInstance();
         int p = 0;
-        uint32_t w = wf->CalcWFromFreq( 440.0 );
+        uint32_t w = wf->CalcWFromFreq( 69.f );
         for( int ix=0; ix<256; ix++) {
-            float val = wf->GetTriangle( 440.0, p );
+            float val = wf->GetTriangle( 69.f, p );
             printf("%f,", val);
             p += w;
         }
@@ -70,9 +70,9 @@ namespace{
     TEST_F(WaveformTest, GetSaw){
         Waveform* wf = Waveform::GetInstance();
         int p = 0;
-        uint32_t w = wf->CalcWFromFreq( 440.0 );
+        uint32_t w = wf->CalcWFromFreq( 69.f );
         for( int ix=0; ix<256; ix++) {
-            float val = wf->GetSaw( 440.0, p );
+            float val = wf->GetSaw( 69.f, p );
             printf("%f,", val);
             p += w;
         }
@@ -82,9 +82,9 @@ namespace{
     TEST_F(WaveformTest, GetSquare){
         Waveform* wf = Waveform::GetInstance();
         int p = 0;
-        uint32_t w = wf->CalcWFromFreq( 440.0 );
+        uint32_t w = wf->CalcWFromFreq( 69.f );
         for( int ix=0; ix<256; ix++) {
-            float val = wf->GetSquare( 440.0, p );
+            float val = wf->GetSquare( 69.f, p );
             printf("%f,", val);
             p += w;
         }
