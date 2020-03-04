@@ -1,6 +1,7 @@
 /**
  * @file envelope.cpp
  */
+#include <cstdio>
 
 #include "envelope.h"
 
@@ -42,7 +43,7 @@ float Envelope::Process( float in )
     switch (state_)
     {
     case kIdle:
-        out_lv = 1.f;
+        out_lv = 0;
         break;
 
     case kAttack:
@@ -79,7 +80,7 @@ float Envelope::Process( float in )
 
     case kRelease:
         if( release_ms_ != 0 ) {
-            out_lv = (out_lv_prev_ - (elapsed_ms *(1000.0/fs_)));
+            out_lv = sustain_lv_ - (sustain_lv_ * (elapsed_ms / release_ms_));
         }
         else {
             out_lv = 0;
@@ -149,4 +150,12 @@ void Envelope::SetSustain(float sustain_lv)
 void Envelope::SetRelease(int release_ms)
 {
     release_ms_ = release_ms;
+}
+
+/**
+ * @brief IsPlaying
+ */
+bool Envelope::IsPlaying()
+{
+    return (state_ != kIdle);
 }

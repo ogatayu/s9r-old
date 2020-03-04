@@ -21,6 +21,8 @@ public:
     void SetSustain(float sustain_lv);
     void SetRelease(int release_ms);
 
+    bool IsPlaying();
+
 private:
     enum EnvelopeState
     {

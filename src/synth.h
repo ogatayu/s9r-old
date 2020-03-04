@@ -54,6 +54,7 @@ private:
         void  Trigger();
         void  Release();
         float Calc( float val );
+        bool  IsPlaying();
     };
 
     class EG {
@@ -109,7 +110,7 @@ private:
     void NoteOff( int notenum );
 
     // const
-    static const int kVoiceNum = 128;
+    static const int kVoiceNum = 32;
 
     // variable
     int key_mode_;
@@ -119,7 +120,7 @@ private:
 
     int mono_current_velocity_;  // モノモード時に使うワーク用ベロシテシティ値
 
-    Voice* voice[kVoiceNum];
+    Voice* voice_[kVoiceNum];
 
     std::list<Voice*> on_voices_; // キーオン中のボイスリスト
 
@@ -130,15 +131,7 @@ private:
     Voice* GetNextOffVoice();
 
 public:
-    VoiceCtrl() {
-        key_mode_         = kPoly;
-        current_voice_no_ = 0;
-        unison_num_       = 1;
-        poly_num_         = 16;  // 16 voices
-        for(int ix=0; ix<kVoiceNum; ix++) {
-            voice[ix] = new Voice();
-        }
-    }
+    VoiceCtrl();
     ~VoiceCtrl(){}
 
     enum {

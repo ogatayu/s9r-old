@@ -122,6 +122,21 @@ static double synth_signal_callback( void* userdata )
 
 ///////////////////////////////////////////////////////////////////////////////
 
+/**
+ * @brief VoiceCtrl constructor
+ */
+VoiceCtrl::VoiceCtrl()
+{
+    key_mode_         = kPoly;
+    current_voice_no_ = 0;
+    unison_num_       = 1;
+    poly_num_         = 16;  // 16 voices
+    for(int ix=0; ix<kVoiceNum; ix++) {
+        voice_[ix] = new Voice();
+        voice_[ix]->SetNo(ix);
+    }
+}
+
 #if 0
 /**
  * @brief NoteOn
@@ -166,12 +181,9 @@ Voice* VoiceCtrl::GetNextOffVoice()
 {
     int current_voice_no = current_voice_no_;
     for( int i=0; i<kVoiceNum; i++ ) {
-        current_voice_no++;
-        if( current_voice_no >= kVoiceNum ) {
-            current_voice_no = 0;
-        }
-        if( !voice[current_voice_no]->IsKeyOn() ) {
-            return voice[current_voice_no];
+        current_voice_no = (current_voice_no + 1) % kVoiceNum;
+        if( !voice_[current_voice_no]->IsKeyOn() ) {
+            return voice_[current_voice_no];
         }
     }
     // どれもオンだった。
@@ -215,19 +227,20 @@ void VoiceCtrl::TriggerPoly()
     int num = MIN( poly_num_, midictrl->GetOnKeyNum() );    // 処理する最大ノート数はポリ数と押鍵キー数のどちらか少ない方
     for( int i=0; i<num; i++ ) {
 
-        int noteNo = midictrl->GetNewOnKeyNN(i);        // 新規押鍵キーでi番目に新しいキーのノートNO（NEWキーフラグ付き）
-        if(noteNo == -1) break;                            // 新規押鍵キーはなかった→これ以上古い新規押鍵もないはずなので処理終了
+        int noteNo = midictrl->GetNewOnKeyNN(i); // 新規押鍵キーでi番目に新しいキーのノートNO（NEWキーフラグ付き）
+        if(noteNo == -1) break;                 // 新規押鍵キーはなかった→これ以上古い新規押鍵もないはずなので処理終了
 
         // 既に同じノートNoを発音しているボイスがあれば、リリースする。
         // 例えばアルペジエータでゲートタイム１００％とした時に、この対応がなければ、音がどんどん重なっていく。
         // これは、このアルゴリズムではnote on/offは鍵盤の状態を変更するだけで、もし同一時刻にoff→onの順で同時にきた場合、
         // 結果的にnoteoffは無視される事になるため。
         // このような事にならないために、同一ノートの複数ボイス発音は不可とする。
-        for(std::list<Voice*>::iterator v=on_voices_.begin();v != on_voices_.end();) {
-            if((*v)->GetNoteNo()==noteNo){
+        for( std::list<Voice*>::iterator v=on_voices_.begin(); v != on_voices_.end(); ) {
+            if((*v)->GetNoteNo() == noteNo) {
                 (*v)->Release();
-                v=on_voices_.erase(v);
-            }else v++;
+                v = on_voices_.erase(v);
+            }
+            else v++;
         }
 
         // ユニゾンボイスの数だけ、トリガー処理
@@ -243,6 +256,7 @@ void VoiceCtrl::TriggerPoly()
                 on_voices_.pop_front();
             }
             current_voice_no_ = v->GetNo();
+            printf("current_voice_no_ = %d\n", current_voice_no_);
             if(u==0) pUnisonMasterVoice = v; // ユニソンマスターボイスの退避
 
             // ノートNO等の設定とトリガー
@@ -264,8 +278,8 @@ void VoiceCtrl::TriggerMono()
     // なにもキーがおさえられていなければ、現在のオンボイスをリリースして終わり
     if(midictrl->GetOnKeyNum()==0) {
         for(int i=0;i < unison_num_; i++) {
-            on_voices_.remove(voice[i]);
-            if(voice[i]->IsKeyOn()) voice[i]->Release();
+            on_voices_.remove(voice_[i]);
+            if(voice_[i]->IsKeyOn()) voice_[i]->Release();
         }
         mono_current_velocity_ = 0;
         return;
@@ -283,18 +297,18 @@ void VoiceCtrl::TriggerMono()
         // 新規ではない→何かキーが離された結果、発音される事になったノート
         // このベロシティは離されたキーと同じとする。よって、m_monoCurrentVelocityは更新しない。
         noteNo = midictrl->GetOnKeyNN(0);
-        if(!voice[0]->IsKeyOn() || voice[0]->GetNoteNo() != noteNo) bProcess = true;
+        if(!voice_[0]->IsKeyOn() || voice_[0]->GetNoteNo() != noteNo) bProcess = true;
     }
 
     if(!bProcess) return;    // 発音不要
 
     // 発音処理
-    Voice* pUnisonMasterVoice = voice[0];    // ユニゾンマスターは常にボイス番号ゼロ
+    Voice* pUnisonMasterVoice = voice_[0];    // ユニゾンマスターは常にボイス番号ゼロ
     if(key_mode_ == kMono) {
         // モノモード時
         // 必ずトリガー
         for(int i=0;i < unison_num_; i++) {
-            Voice* v = voice[i];
+            Voice* v = voice_[i];
             // ノートNO等の設定とトリガー
             v->SetNoteInfo(noteNo,mono_current_velocity_);
             v->SetUnisonInfo(pUnisonMasterVoice,unison_num_,0);
@@ -309,7 +323,7 @@ void VoiceCtrl::TriggerMono()
         // レガートモノモード時
         // 現在キーオフだった場合のみトリガー
         for(int i=0;i < unison_num_; i++) {
-            Voice* v = voice[i];
+            Voice* v = voice_[i];
             // ノートNO等の設定とトリガー
             v->SetNoteInfo(noteNo,mono_current_velocity_);
             if(!v->IsKeyOn()){
@@ -334,8 +348,8 @@ float VoiceCtrl::SignalProcess()
     double   val = 0;
     uint32_t w;
     for(int ix = 0; ix<kVoiceNum; ix++) {
-        if( voice[ix]->IsPlaying() == true ) {
-            Voice *v = voice[ix];
+        if( voice_[ix]->IsPlaying() == true ) {
+            Voice *v = voice_[ix];
             val += v->Calc();
         }
     }
@@ -365,7 +379,7 @@ bool Voice::IsKeyOn()
 
 bool Voice::IsPlaying()
 {
-    return key_on_;  // エンベロープを実装するまでkeyon=playingとする
+    return vca.IsPlaying();
 }
 
 // トリガー通知
@@ -473,7 +487,7 @@ float Voice::VCF::Calc( float val )
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * @brief constructor
+ * @brief VCA constructor
  */
 Voice::VCA::VCA()
 {
@@ -483,12 +497,11 @@ Voice::VCA::VCA()
     env->SetAttack( 100 );
     env->SetDecay( 200 );
     env->SetSustain( 0.5f );
-    env->SetRelease( 500 );
+    env->SetRelease( 1000 );
 }
 
 /**
  * @brief 音量加工
- *
  */
 void Voice::VCA::Trigger()
 {
@@ -497,7 +510,6 @@ void Voice::VCA::Trigger()
 
 /**
  * @brief 音量加工
- *
  */
 void Voice::VCA::Release()
 {
@@ -513,4 +525,12 @@ void Voice::VCA::Release()
 float Voice::VCA::Calc( float val )
 {
     return env->Process( val ) * 0.5f;
+}
+
+/**
+ * @brief 音量加工
+ */
+bool Voice::VCA::IsPlaying()
+{
+    return env->IsPlaying();
 }
