@@ -1,5 +1,5 @@
 /**
- * @file draw.cpp
+ * @file screen_ui.cpp
  */
 #include <thread>
 #include <chrono>
@@ -15,20 +15,26 @@
 #include "nanovg_gl.h"
 
 #include "fifo.h"
-#include "draw.h"
+#include "screen_ui.h"
 
-Draw* Draw::instance_ = nullptr;
+
+static void sui_key_callback( GLFWwindow* window, int key, int scancode, int action, int mods );
+
+ScreenUI* ScreenUI::instance_ = nullptr;
 
 
 /**
- * @brief Destroy
+ * @brief Create
  */
-Draw* Draw::Create()
+ScreenUI* ScreenUI::Create()
 {
     if (!instance_)
     {
-        instance_ = new Draw();
-        instance_->Initialize();
+        instance_ = new ScreenUI();
+        if(!instance_->Initialize()) {
+            delete instance_;
+            instance_ = nullptr;
+        }
     }
     return instance_;
 }
@@ -36,7 +42,7 @@ Draw* Draw::Create()
 /**
  * @brief Destroy
  */
-void Draw::Destroy()
+void ScreenUI::Destroy()
 {
     delete instance_;
     instance_ = nullptr;
@@ -45,7 +51,7 @@ void Draw::Destroy()
 /**
  * @brief GetInstance
  */
-Draw* Draw::GetInstance()
+ScreenUI* ScreenUI::GetInstance()
 {
     return instance_;
 }
@@ -53,53 +59,60 @@ Draw* Draw::GetInstance()
 /**
  * @brief Initialize
  */
-bool Draw::Initialize()
+bool ScreenUI::Initialize()
 {
     waveform_ = new FIFO( kSampleNum, sizeof(float) );
-    return true;
-}
 
-/**
- * @brief Start
- */
-void Draw::Start()
-{
+    ////////////////////////////////////////////////////////////////
+    // GLFW initialize
     if (!glfwInit()) {
         fprintf(stderr,"glfwInit fail\n");
-        return;
+        return false;
     }
 
 #ifdef NDEBUG
-    GLFWwindow* glfw_window_ = glfwCreateWindow( kWidth, kHeight, "s9r", glfwGetPrimaryMonitor(), NULL );
+    glfw_window_ = glfwCreateWindow( kWidth, kHeight, "s9r", glfwGetPrimaryMonitor(), NULL );
 #else
-    GLFWwindow* glfw_window_ = glfwCreateWindow( kWidth, kHeight, "s9r", NULL, NULL );
+    glfw_window_ = glfwCreateWindow( kWidth, kHeight, "s9r", NULL, NULL );
 #endif
-
     if (!glfw_window_) {
         glfwTerminate();
         fprintf(stderr,"glfwCreateWindow fail\n");
-        return;
+        return false;
     }
+
+    // set callback
+    glfwSetKeyCallback(glfw_window_, sui_key_callback);
+
     glfwMakeContextCurrent(glfw_window_);
     gl3wInit();
 
     glfwSwapInterval(1);
 
-    // nanovg create
-    struct NVGcontext* vg_ = nvgCreateGLES3(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
+    ////////////////////////////////////////////////////////////////
+    // nanovg initialize
+    vg_ = nvgCreateGLES3(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
     if(!vg_) {
         glfwTerminate();
         fprintf(stderr,"nvgCreateGLES3 fail\n");
-        return;
+        return false;
     }
 
     // font init
     int fnt = nvgCreateFont(vg_, "sans-bold", "./fonts/Roboto-Bold.ttf");
     if( fnt == -1) {
         printf("Could not add font bold.\n");
-        return;
+        return false;
     }
 
+    return true;
+}
+
+/**
+ * @brief Start
+ */
+void ScreenUI::Start()
+{
     using clock = std::chrono::high_resolution_clock;
     auto wait_time = std::chrono::nanoseconds(int(1e9f / 30.f));
     float fps = 0;
@@ -153,17 +166,23 @@ void Draw::Start()
     glfwTerminate();
 }
 
-
 ///////////////////////////////////////////////////////////////////////////////
 
-void  Draw::WaveformPut( float wavedata_ )
+void ScreenUI::WaveformPut( float wavedata_ )
 {
     waveform_->Put( &wavedata_ );
 }
 
-void Draw::WaveformGet( float* buf, int num )
+void ScreenUI::WaveformGet( float* buf, int num )
 {
     waveform_->SnoopFromTail(buf, num);
     //memcpy( buf, waveform_->buffer_, sizeof(float) * num );
     return;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+static void sui_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    printf("keyFunCB %d %d %d %d\n", key, scancode, action, mods);
 }

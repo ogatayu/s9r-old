@@ -15,7 +15,7 @@
 #include "midi.h"
 #include "synth.h"
 
-#include "draw.h"
+#include "screen_ui.h"
 
 
 static double synth_signal_callback( void* userdata );
@@ -105,8 +105,8 @@ float Synth::SignalCallback()
     // 各ボイスの信号処理を行いステレオMIXする（ボイスコントローラーの仕事）。
     float val = voicectrl_->SignalProcess();
 
-    Draw* draw = Draw::GetInstance();
-    draw->WaveformPut(val);
+    ScreenUI* screen_ui = ScreenUI::GetInstance();
+    screen_ui->WaveformPut(val);
 
     return val;
 }

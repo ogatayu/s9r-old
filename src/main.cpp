@@ -8,7 +8,7 @@
 #include "midi.h"
 #include "synth.h"
 
-#include "draw.h"
+#include "screen_ui.h"
 
 int main(int argc, char *argv[])
 {
@@ -28,17 +28,17 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    Draw* draw = Draw::Create();
-    if(!draw) {
+    ScreenUI* screen_ui = ScreenUI::Create();
+    if(!screen_ui) {
         return 1;
     }
 
     // s9r start!!!
     synth->Start();
-    draw->Start();
+    screen_ui->Start();
 
     // end
-    Draw::Destroy();
+    ScreenUI::Destroy();
     AudioCtrl::Destroy();
     MidiCtrl::Destroy();
     Synth::Destroy();

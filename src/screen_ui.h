@@ -1,5 +1,5 @@
 /**
- * @file draw.h
+ * @file screen_ui.h
  */
 #pragma once
 
@@ -9,16 +9,16 @@ struct GLFWwindow;
 struct NVGcontext;
 
 /**
- * @class Draw
+ * @class ScreenUI
  */
-class Draw {
+class ScreenUI {
 private:
-    Draw(){}
-    ~Draw(){}
+    ScreenUI(){}
+    ~ScreenUI(){}
 
-    Draw(const Draw&);
-    Draw& operator=(const Draw&);
-    static Draw* instance_;
+    ScreenUI(const ScreenUI&);
+    ScreenUI& operator=(const ScreenUI&);
+    static ScreenUI* instance_;
 
     bool Initialize();
 
@@ -30,9 +30,9 @@ private:
     float wavedata_[kSampleNum] = { 0 };
 
 public:
-    static Draw* Create();
+    static ScreenUI* Create();
     static void  Destroy();
-    static Draw* GetInstance();
+    static ScreenUI* GetInstance();
 
     // context info
     GLFWwindow* glfw_window_;
