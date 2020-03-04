@@ -86,18 +86,17 @@ cleanup:
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * @brief midi_in_callback
- * @param[in]  deltatime
- * @param[in]  message
+ * @brief MidiRecv
+ * @param[in]  msg
  */
-void MidiCtrl::InputCallback( double deltatime, std::vector< unsigned char > *message )
+void MidiCtrl::MidiRecv( std::vector<unsigned char> *msg )
 {
-    const unsigned int bytes = message->size();
+    const unsigned int bytes = msg->size();
     if(bytes <= 0) { return; }
 
-    const int kind     = message->at(0) & 0xF0;
-    const int notenum  = message->at(1);
-    const int velocity = message->at(2);
+    const int kind     = msg->at(0) & 0xF0;
+    const int notenum  = msg->at(1);
+    const int velocity = msg->at(2);
 
     switch( kind ) {
         case 0x80:  // Note off
@@ -109,15 +108,6 @@ void MidiCtrl::InputCallback( double deltatime, std::vector< unsigned char > *me
             KeyOn( notenum, velocity );
             break;
     }
-
-#if 1
-    for ( unsigned int ix=0; ix<bytes; ix++ ) {
-        std::cout << "Byte " << ix << " = " << (int)message->at(ix) << ", ";
-    }
-    if ( bytes > 0 ) {
-        std::cout << "stamp = " << deltatime << std::endl;
-    }
-#endif
 }
 
 /**
@@ -126,10 +116,19 @@ void MidiCtrl::InputCallback( double deltatime, std::vector< unsigned char > *me
  * @param[in]  message
  * @param[in]  user_data
  */
-static void midi_input_callback( double deltatime, std::vector< unsigned char > *message, void * user_data )
+static void midi_input_callback( double deltatime, std::vector<unsigned char> *message, void * user_data )
 {
     MidiCtrl* midictrl = (MidiCtrl*)user_data;
-    midictrl->InputCallback( deltatime, message );
+    midictrl->MidiRecv( message );
+
+#if 1
+    for ( unsigned int ix=0; ix<message->size(); ix++ ) {
+        std::cout << "Byte " << ix << " = " << (int)message->at(ix) << ", ";
+    }
+    if ( message->size() > 0 ) {
+        std::cout << "stamp = " << deltatime << std::endl;
+    }
+#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////

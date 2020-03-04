@@ -16,6 +16,7 @@
 
 #include "fifo.h"
 #include "screen_ui.h"
+#include "keyctrl.h"
 
 
 static void sui_key_callback( GLFWwindow* window, int key, int scancode, int action, int mods );
@@ -80,6 +81,8 @@ bool ScreenUI::Initialize()
         fprintf(stderr,"glfwCreateWindow fail\n");
         return false;
     }
+
+    glfwSetWindowUserPointer(glfw_window_, this);
 
     // set callback
     glfwSetKeyCallback(glfw_window_, sui_key_callback);
@@ -168,11 +171,17 @@ void ScreenUI::Start()
 
 ///////////////////////////////////////////////////////////////////////////////
 
+/**
+ * @brief WaveformPut
+ */
 void ScreenUI::WaveformPut( float wavedata_ )
 {
     waveform_->Put( &wavedata_ );
 }
 
+/**
+ * @brief WaveformGet
+ */
 void ScreenUI::WaveformGet( float* buf, int num )
 {
     waveform_->SnoopFromTail(buf, num);
@@ -182,7 +191,19 @@ void ScreenUI::WaveformGet( float* buf, int num )
 
 ///////////////////////////////////////////////////////////////////////////////
 
-static void sui_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+/**
+ * @brief sui_get_for
+ */
+ScreenUI* sui_get_for(GLFWwindow* glfw_window)
 {
-    printf("keyFunCB %d %d %d %d\n", key, scancode, action, mods);
+    return static_cast<ScreenUI*>(glfwGetWindowUserPointer(glfw_window));
+}
+
+/**
+ * @brief sui_key_callback
+ */
+static void sui_key_callback(GLFWwindow* glfw_window, int key, int scancode, int action, int mods)
+{
+    ScreenUI* sui = sui_get_for(glfw_window);
+    sui->keyctrl_.KeyEventHandle( key, action );
 }

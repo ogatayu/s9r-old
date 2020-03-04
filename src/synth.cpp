@@ -256,7 +256,6 @@ void VoiceCtrl::TriggerPoly()
                 on_voices_.pop_front();
             }
             current_voice_no_ = v->GetNo();
-            printf("current_voice_no_ = %d\n", current_voice_no_);
             if(u==0) pUnisonMasterVoice = v; // ユニソンマスターボイスの退避
 
             // ノートNO等の設定とトリガー

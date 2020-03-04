@@ -4,6 +4,7 @@
 #pragma once
 
 #include "fifo.h"
+#include "keyctrl.h"
 
 struct GLFWwindow;
 struct NVGcontext;
@@ -37,6 +38,8 @@ public:
     // context info
     GLFWwindow* glfw_window_;
     NVGcontext* vg_;
+
+    KeyCtrl keyctrl_;
 
     void Start();
 
