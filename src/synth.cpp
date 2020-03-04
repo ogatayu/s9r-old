@@ -15,7 +15,7 @@
 #include "midi.h"
 #include "synth.h"
 
-#include "draw.h"
+#include "screen_ui.h"
 
 
 static double synth_signal_callback( void* userdata );
@@ -105,8 +105,8 @@ float Synth::SignalCallback()
     // 各ボイスの信号処理を行いステレオMIXする（ボイスコントローラーの仕事）。
     float val = voicectrl_->SignalProcess();
 
-    Draw* draw = Draw::GetInstance();
-    draw->WaveformPut(val);
+    ScreenUI* screen_ui = ScreenUI::GetInstance();
+    screen_ui->WaveformPut(val);
 
     return val;
 }
@@ -256,7 +256,6 @@ void VoiceCtrl::TriggerPoly()
                 on_voices_.pop_front();
             }
             current_voice_no_ = v->GetNo();
-            printf("current_voice_no_ = %d\n", current_voice_no_);
             if(u==0) pUnisonMasterVoice = v; // ユニソンマスターボイスの退避
 
             // ノートNO等の設定とトリガー

@@ -40,8 +40,10 @@ public:
     static void      Destroy();
     static MidiCtrl* GetInstance();
 
-    void InputCallback( double deltatime, std::vector< unsigned char > *message );
+    void MidiRecv( std::vector<unsigned char> *msg );
+    void MidiSend( std::vector<unsigned char> *msg ) { MidiRecv(msg); }
 
+    // key management
     bool IsStatusChanged();
     void ResetStatusChange();
 

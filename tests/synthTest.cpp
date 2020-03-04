@@ -5,7 +5,7 @@
 #include "midi.h"
 #include "audio.h"
 #include "synth.h"
-#include "draw.h"
+#include "screen_ui.h"
 
 namespace {
     class SynthTest : public ::testing::Test
@@ -17,12 +17,12 @@ namespace {
             AudioCtrl::DummyMode();
             AudioCtrl::Create();
             Synth::Create( 440.0 );
-            Draw::Create();
+            ScreenUI::Create();
         }
 
         virtual void TearDown()
         {
-            Draw::Destroy();
+            ScreenUI::Destroy();
             Synth::Destroy();
             AudioCtrl::Destroy();
             MidiCtrl::Destroy();
