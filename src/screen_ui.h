@@ -13,6 +13,22 @@ struct NVGcontext;
  * @class ScreenUI
  */
 class ScreenUI {
+public:
+    static ScreenUI* Create();
+    static void  Destroy();
+    static ScreenUI* GetInstance();
+
+    // context info
+    GLFWwindow* glfw_window_;
+    NVGcontext* vg_;
+
+    KeyCtrl keyctrl_;
+
+    void Start();
+
+    void WaveformPut( float data );
+    void WaveformGet( float* buf, int num );
+
 private:
     ScreenUI(){}
     ~ScreenUI(){}
@@ -30,19 +46,8 @@ private:
     FIFO* waveform_;
     float wavedata_[kSampleNum] = { 0 };
 
-public:
-    static ScreenUI* Create();
-    static void  Destroy();
-    static ScreenUI* GetInstance();
+    uint32_t frame_count_;
 
-    // context info
-    GLFWwindow* glfw_window_;
-    NVGcontext* vg_;
-
-    KeyCtrl keyctrl_;
-
-    void Start();
-
-    void WaveformPut( float data );
-    void WaveformGet( float* buf, int num );
+    void DrawWaveform();
+    void DrawProcTime();
 };
