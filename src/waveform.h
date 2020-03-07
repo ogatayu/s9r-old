@@ -9,6 +9,28 @@
  * @class Waveform
  */
 class Waveform {
+public:
+    // wave form type
+    const int WF_SINE   = 0;  // サイン波
+    const int WF_TRI    = 1;  // 三角波
+    const int WF_SAW    = 2;  // 鋸波
+    const int WF_SQUARE = 3;  // 矩形波
+
+    static Waveform* Create( float tuning, float fs );
+    static void      Destroy();
+    static Waveform* GetInstance();
+
+    uint32_t CalcWFromNoteNo( float nn, float det );
+    uint32_t CalcWFromFreq( float freq );
+
+    // 位相は16:16の固定小数で扱う
+    const float GetSine( int fixed_phase );
+    const float GetTriangle( float nn, int fixed_phase );
+    const float GetSaw( float nn, int fixed_phase );
+    const float GetSquare( float nn, int fixed_phase );
+
+    float GetSamplerate() { return fs_; }
+
 private:
     Waveform(){}
     ~Waveform(){}
@@ -45,24 +67,4 @@ private:
 
     float* GetWTFromNN( int wf, float nn );
     float* GetWTFromFreq( int wf, float freq );
-
-public:
-    // wave form type
-    const int WF_SINE   = 0;  // サイン波
-    const int WF_TRI    = 1;  // 三角波
-    const int WF_SAW    = 2;  // 鋸波
-    const int WF_SQUARE = 3;  // 矩形波
-
-    static Waveform* Create( float tuning, float fs );
-    static void      Destroy();
-    static Waveform* GetInstance();
-
-    uint32_t CalcWFromNoteNo( float nn, float det );
-    uint32_t CalcWFromFreq( float freq );
-
-    // 位相は16:16の固定小数で扱う
-    const float GetSine( int fixed_phase );
-    const float GetTriangle( float nn, int fixed_phase );
-    const float GetSaw( float nn, int fixed_phase );
-    const float GetSquare( float nn, int fixed_phase );
 };
