@@ -65,6 +65,7 @@ ScreenUI* ScreenUI::GetInstance()
  */
 bool ScreenUI::Initialize()
 {
+    frame_count_ = 0;
     waveform_ = new FIFO( kSampleNum, sizeof(float) );
 
     ////////////////////////////////////////////////////////////////
@@ -77,7 +78,7 @@ bool ScreenUI::Initialize()
 #ifdef NDEBUG
     glfw_window_ = glfwCreateWindow( kWidth, kHeight, "s9r", glfwGetPrimaryMonitor(), NULL );
 #else
-    glfw_window_ = glfwCreateWindow( kWidth, kHeight, "s9r", NULL, NULL );
+    glfw_window_ = glfwCreateWindow( kWidth*2, kHeight*2, "s9r", NULL, NULL );
 #endif
     if (!glfw_window_) {
         glfwTerminate();
@@ -119,13 +120,12 @@ bool ScreenUI::Initialize()
  */
 void ScreenUI::Start()
 {
-    frame_count_ = 0;
-
     using clock = std::chrono::high_resolution_clock;
-    auto wait_time = std::chrono::nanoseconds(int(1e9f / 30.f));
-    float fps = 0;
+    auto wait_time = std::chrono::nanoseconds(int(1e9f / kFPS));
     auto base_time = clock::now();
     while (!glfwWindowShouldClose(glfw_window_)) {
+        info_pos_y = 15.f;
+
         WaveformGet(wavedata_, kSampleNum);
 
         glClearColor(0.1f, 0.1f, 0.2f, 0.0f);
@@ -133,15 +133,8 @@ void ScreenUI::Start()
 
         nvgBeginFrame(vg_, kWidth, kHeight, 1.0);
         {
-            // fps
-            nvgFontSize(vg_, 15.0f);
-            nvgFontFace(vg_, "sans-bold");
-            nvgTextAlign(vg_, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
-            nvgFillColor(vg_, nvgRGBA(255,255,255,200));
-            nvgText(vg_, 10, 15, fmt::format("FPS: {:.2f}", fps).c_str(), NULL);
-
+            DrawFps();
             DrawProcTime();
-
             DrawWaveform();
         }
         nvgEndFrame(vg_);
@@ -155,7 +148,7 @@ void ScreenUI::Start()
         std::this_thread::sleep_for(wait_time-last_time);
 
         auto nanosec = std::chrono::duration_cast< std::chrono::nanoseconds >( last_time ).count();
-        fps = 1e9f / nanosec;
+        now_fps_ = 1e9f / nanosec;
 
         frame_count_++;
     }
@@ -166,16 +159,17 @@ void ScreenUI::Start()
 
 ///////////////////////////////////////////////////////////////////////////////
 
+/**
+ * @brief DrawWaveform
+ */
 void ScreenUI::DrawWaveform()
 {
     float w = (float)kWidth / (kSampleNum-1);
     nvgBeginPath(vg_);
-
     nvgMoveTo( vg_, -1.0f, (wavedata_[0]*100.0f) + (kHeight/2) );
     for(int ix=0; ix<kSampleNum; ix++) {
         nvgLineTo( vg_, (float)ix * w, (wavedata_[ix]*100.0f) + (kHeight/2) );
     }
-
     nvgStrokeColor(vg_, nvgRGBA(255,255,255,200));
     nvgStrokeWidth(vg_, 2.0f);
     nvgLineJoin(vg_, NVG_ROUND);
@@ -183,28 +177,83 @@ void ScreenUI::DrawWaveform()
     nvgStroke(vg_);
 }
 
-
-void ScreenUI::DrawProcTime()
+/**
+ * @brief DrawFps
+ */
+void ScreenUI::DrawFps()
 {
-    Synth* synth = Synth::GetInstance();
-    static uint32_t synth_sigproc_time = 0; // nanosecond
-
     nvgFontSize(vg_, 15.0f);
     nvgFontFace(vg_, "sans-bold");
     nvgTextAlign(vg_, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
     nvgFillColor(vg_, nvgRGBA(255,255,255,200));
-    nvgText(vg_, 10, 30, fmt::format("SigProcTime: {}", synth_sigproc_time).c_str(), NULL);
-    if( frame_count_ % 15 == 0 ) {
-        synth_sigproc_time = synth->GetProcTime();
+    nvgText(vg_, 10, info_pos_y, fmt::format("FPS: {:.2f}", now_fps_).c_str(), NULL);
+    info_pos_y += 15;
+}
+
+/**
+ * @brief DrawProcTime
+ */
+void ScreenUI::DrawProcTime()
+{
+    Synth* synth = Synth::GetInstance();
+    static uint32_t now_time = 0; // nanosecond
+    static uint32_t max_time = 0;
+    static uint32_t max_time_hold_count = 0;  // max time hold time(count);
+    static uint32_t min_time = 0;
+    float w = (float)kWidth / 20833.3333f;
+
+    if( frame_count_ % 5 == 0 ) {
+        now_time = synth->GetProcTime();
+        if( max_time < now_time ) {
+            max_time = now_time;
+            max_time_hold_count = 0;
+        }
+        else {
+            // hold max time
+            if( max_time_hold_count > 30 ) {
+                max_time = now_time;
+            }
+            max_time_hold_count++;
+        }
+
+        if( (min_time > now_time) || (min_time == 0) ) {
+            min_time = now_time;
+        }
     }
 
-    float w = (float)kWidth / 20833.3333f;
+    // text
+    nvgFontSize(vg_, 15.0f);
+    nvgFontFace(vg_, "sans-bold");
+    nvgTextAlign(vg_, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
+    nvgFillColor(vg_, nvgRGBA(255,255,255,200));
+    nvgText(vg_, 10, info_pos_y, fmt::format("SigProcTime: {}", now_time).c_str(), NULL);
+
+    //max
     nvgBeginPath(vg_);
-    nvgMoveTo( vg_, -1.0f * w, 45 );
-    nvgLineTo( vg_, w * synth_sigproc_time, 45 );
-    nvgStrokeColor(vg_, nvgRGBA(255,0,0,200));
+    nvgMoveTo( vg_, (-1.0f*w), (info_pos_y+15) );
+    nvgLineTo( vg_, (w*max_time), (info_pos_y+15) );
+    nvgStrokeColor(vg_, nvgRGBA(255,0,0,150));
     nvgStrokeWidth(vg_, 4.0f);
     nvgStroke(vg_);
+
+    // now
+    nvgBeginPath(vg_);
+    nvgMoveTo( vg_, (-1.0f*w), (info_pos_y+15) );
+    nvgLineTo( vg_, (w*now_time), (info_pos_y+15) );
+    nvgStrokeColor(vg_, nvgRGBA(0,255,0,255));
+    nvgStrokeWidth(vg_, 4.0f);
+    nvgStroke(vg_);
+
+    // min
+    nvgBeginPath(vg_);
+    nvgMoveTo( vg_, (-1.0f*w), (info_pos_y+15) );
+    nvgLineTo( vg_, (w*min_time), (info_pos_y+15) );
+    nvgStrokeColor(vg_, nvgRGBA(0,0,255,255));
+    nvgStrokeWidth(vg_, 4.0f);
+    nvgStroke(vg_);
+
+
+    info_pos_y += 35;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

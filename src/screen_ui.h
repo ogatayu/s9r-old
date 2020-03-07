@@ -39,15 +39,19 @@ private:
 
     bool Initialize();
 
+    static const int kFPS  = 30;
     static const int kWidth  = 480;
     static const int kHeight = 320;
     static const int kSampleNum = 256;
 
     FIFO* waveform_;
-    float wavedata_[kSampleNum] = { 0 };
+    float wavedata_[kSampleNum];
 
+    float    now_fps_;
     uint32_t frame_count_;
 
+    float info_pos_y;
     void DrawWaveform();
+    void DrawFps();
     void DrawProcTime();
 };
